@@ -1,0 +1,13 @@
+branches:
+  except:
+  - python
+language: bash
+addons:
+  apt:
+    sources:
+    - debian-sid
+    packages:
+    - shellcheck
+
+script:
+- shellcheck ipa_check_consistency
