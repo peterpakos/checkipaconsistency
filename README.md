@@ -79,3 +79,10 @@ OK - Active Users consistency
 $ echo $?
 0
 ```
+
+## LDAP Conflicts
+Normally conflicting changes between replicas are resolved automatically (the most recent change takes precedence).
+However, there are cases where manual intervention is required. If you see LDAP conflicts in the output of this script,
+you need to find the conflicting entries and decide which of them should be preserved/deleted.
+
+More information on solving common replication conflicts can be found [here](https://access.redhat.com/documentation/en-us/red_hat_directory_server/10/html/administration_guide/managing_replication-solving_common_replication_conflicts).
