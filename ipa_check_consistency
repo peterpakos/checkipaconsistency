@@ -730,7 +730,7 @@ msdcs() {
   printf "%-${FIRST_COLUMN}s" "Microsoft ADTrust"
   for server in "${SERVERS[@]}"; do
     (
-    if (dig +short _kerberos._tcp.Default-First-Site-Name._sites.dc._msdcs."${DOMAIN}" SRV | grep -q "${server}"; then
+    if (dig +short _kerberos._tcp.Default-First-Site-Name._sites.dc._msdcs."${DOMAIN}" SRV | grep -q "${server}"); then
       state="YES"
     else
       state="NO"
