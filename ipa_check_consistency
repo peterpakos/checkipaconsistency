@@ -40,7 +40,7 @@ declare -i LAST_COLUMN=5
 declare -i NAGIOS=0
 declare WARNING=1
 declare CRITICAL=2
-declare -a NAGIOSOPTS=("all" "users" "ustage" "upres" "ugroups" "hosts" "hgroups" "hbac" "sudo" "zones" "certs" "ldap" "ghosts" "bind")
+declare -a NAGIOSOPTS=("all" "users" "ustage" "upres" "ugroups" "hosts" "hgroups" "hbac" "sudo" "zones" "certs" "ldap" "ghosts" "bind" "msdcs")
 declare -A NAGIOSMSGS=( \
                         ['users']='Active Users' \
                         ['ustage']='Stage Users' \
@@ -55,6 +55,7 @@ declare -A NAGIOSMSGS=( \
                         ['ldap']='LDAP Conflicts' \
                         ['ghosts']='Ghost Replicas' \
                         ['bind']='Anonymous BIND' \
+                        ['msdscs']='Microsoft ADTrust' \
                       )
 declare -i CHECKS_NO=${#NAGIOSMSGS[@]}
 
@@ -100,6 +101,7 @@ AVAILABLE OPTIONS:
     ldap    - LDAP Conflicts
     ghosts  - Ghost Replicas
     bind    - Anonymous BIND
+    msdscs  - Microsoft ADTrust
 -w  Warning threshold (0-${CHECKS_NO}), number of failed checks before alerting (default: 1)
 -c  Critical threshold (0-${CHECKS_NO}), number of failed checks before alerting (default: 2)
 -h  Print this help summary page
@@ -720,6 +722,36 @@ anon_bind() {
   fi
 }
 
+msdcs() {
+  local server="" state=""
+  local dir="${TMP_DIR}/msdcs"
+
+  mkdir -p "$dir"
+  printf "%-${FIRST_COLUMN}s" "Microsoft ADTrust"
+  for server in "${SERVERS[@]}"; do
+    (
+    if dig +short _kerberos._tcp.Default-First-Site-Name._sites.dc._msdcs.${domain} SRV | grep -q ${server}; then
+      state="YES"
+    else
+      state="NO"
+    fi
+    printf "%s" "$state" > "${dir}/${server}"
+    ) &
+  done
+  wait
+  for server in "${SERVERS[@]}"; do
+    printf "%-${MIDDLE_COLUMNS}s" "$(< "${dir}/${server}")"
+  done
+  state="$(is_consistent "$dir")"
+  printf "%-${LAST_COLUMN}s\n" "$state"
+  if [[ $NAGIOS -eq 1 ]]; then
+    printf "%s\n" "$state" >> "${TMP_DIR}/nagios"
+    if [[ "$NAGIOSREPORT" == "msdscs" ]]; then
+      printf "%s\n" "$state" >> "${TMP_DIR}/$NAGIOSREPORT"
+    fi
+  fi
+}
+
 replication() {
   local server="" agreements="" agreement="" state=""
   local -i i=0 max=0
@@ -840,6 +872,7 @@ query_servers() {
   certificates > "$TMP_DIR/certificates.out" &
   ldap_conflicts > "$TMP_DIR/ldap_conflicts.out" &
   anon_bind > "$TMP_DIR/anon_bind.out" &
+  msdcs > "$TMP_DIR/msdcs.out" &
   replication > "$TMP_DIR/replication.out" &
   ghost_replicas > "$TMP_DIR/ghost_replicas.out" &
   wait
@@ -859,6 +892,7 @@ display_data() {
   printf "%s\n" "$(< "${TMP_DIR}/ldap_conflicts.out")"
   printf "%s\n" "$(< "${TMP_DIR}/ghost_replicas.out")"
   printf "%s\n" "$(< "${TMP_DIR}/anon_bind.out")"
+  printf "%s\n" "$(< "${TMP_DIR}/msdcs.out")"
   printf "%s\n" "$(< "${TMP_DIR}/replication.out")"
 }
 
