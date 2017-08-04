@@ -22,7 +22,7 @@
 set -eo pipefail
 IFS=$'\n'
 
-readonly APP_VER="1.0.0"
+readonly APP_VER="1.0.1"
 readonly APP_NAME="$(basename "$0")"
 readonly APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 readonly TMP_DIR="$(mktemp -d)"
@@ -314,7 +314,8 @@ display_header() {
 is_consistent() {
   local dir="$1"
 
-  if diff --from-file "$dir"/* &>/dev/null; then
+  # shellcheck disable=SC2046
+  if diff --from-file $(grep -lv 'N/A' -r "$dir" || printf "%s" "$dir") &>/dev/null; then
     printf "OK"
   else
     printf "FAIL"
