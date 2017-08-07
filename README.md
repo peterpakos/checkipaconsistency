@@ -38,6 +38,7 @@ AVAILABLE OPTIONS:
     ldap    - LDAP Conflicts
     ghosts  - Ghost Replicas
     bind    - Anonymous BIND
+    msdcs   - Microsoft ADTrust
 -w  Warning threshold (0-12), number of failed checks before alerting (default: 1)
 -c  Critical threshold (0-12), number of failed checks before alerting (default: 2)
 -h  Print this help summary page

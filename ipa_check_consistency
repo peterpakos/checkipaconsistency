@@ -22,7 +22,7 @@
 set -eo pipefail
 IFS=$'\n'
 
-readonly APP_VER="1.2.0"
+readonly APP_VER="1.2.1"
 readonly APP_NAME="$(basename "$0")"
 readonly APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 readonly TMP_DIR="$(mktemp -d)"
@@ -55,7 +55,7 @@ declare -A NAGIOSMSGS=( \
                         ['ldap']='LDAP Conflicts' \
                         ['ghosts']='Ghost Replicas' \
                         ['bind']='Anonymous BIND' \
-                        ['msdscs']='Microsoft ADTrust' \
+                        ['msdcs']='Microsoft ADTrust' \
                       )
 declare -i CHECKS_NO=${#NAGIOSMSGS[@]}
 
@@ -101,7 +101,7 @@ AVAILABLE OPTIONS:
     ldap    - LDAP Conflicts
     ghosts  - Ghost Replicas
     bind    - Anonymous BIND
-    msdscs  - Microsoft ADTrust
+    msdcs   - Microsoft ADTrust
 -w  Warning threshold (0-${CHECKS_NO}), number of failed checks before alerting (default: 1)
 -c  Critical threshold (0-${CHECKS_NO}), number of failed checks before alerting (default: 2)
 -h  Print this help summary page
@@ -724,7 +724,7 @@ anon_bind() {
 
 msdcs() {
   local server="" state=""
-  local dir="${TMP_DIR}/msdcs"
+  local dir="${TMP_DIR}/dns_msdcs"
 
   mkdir -p "$dir"
   printf "%-${FIRST_COLUMN}s" "Microsoft ADTrust"
@@ -746,7 +746,7 @@ msdcs() {
   printf "%-${LAST_COLUMN}s\n" "$state"
   if [[ $NAGIOS -eq 1 ]]; then
     printf "%s\n" "$state" >> "${TMP_DIR}/nagios"
-    if [[ "$NAGIOSREPORT" == "msdscs" ]]; then
+    if [[ "$NAGIOSREPORT" == "msdcs" ]]; then
       printf "%s\n" "$state" >> "${TMP_DIR}/$NAGIOSREPORT"
     fi
   fi
