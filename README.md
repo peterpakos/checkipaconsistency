@@ -63,6 +63,7 @@ Certificates        N/A      N/A      OK
 LDAP Conflicts      NO       NO       OK
 Ghost Replicas      NO       NO       OK
 Anonymous BIND      YES      YES      OK
+Microsoft ADTrust   NO       NO       OK
 Replication Status  ipa02 0  ipa01 0
 ===========================================
 ```
@@ -70,7 +71,7 @@ Replication Status  ipa02 0  ipa01 0
 ## Nagios/Opsview plug-in mode
 ```
 $ ./ipa_check_consistency -H "ipa01 ipa02" -d ipa.domain.com -W '********' -n all
-OK - 13/13 checks passed
+OK - 14/14 checks passed
 $ echo $?
 0
 ```
