@@ -11,3 +11,9 @@ addons:
 
 script:
 - shellcheck ipa_check_consistency
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+    recipients:
+    - peter@pakos.uk
