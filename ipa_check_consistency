@@ -22,7 +22,7 @@
 set -eo pipefail
 IFS=$'\n'
 
-readonly APP_VER="1.2.1"
+readonly APP_VER="1.3.0"
 readonly APP_NAME="$(basename "$0")"
 readonly APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 readonly TMP_DIR="$(mktemp -d)"
@@ -40,7 +40,7 @@ declare -i LAST_COLUMN=5
 declare -i NAGIOS=0
 declare WARNING=1
 declare CRITICAL=2
-declare -a NAGIOSOPTS=("all" "users" "ustage" "upres" "ugroups" "hosts" "hgroups" "hbac" "sudo" "zones" "certs" "ldap" "ghosts" "bind" "msdcs")
+declare -a NAGIOSOPTS=("all" "users" "ustage" "upres" "ugroups" "hosts" "hgroups" "hbac" "sudo" "zones" "certs" "ldap" "ghosts" "bind" "msdcs" "replica")
 declare -A NAGIOSMSGS=( \
                         ['users']='Active Users' \
                         ['ustage']='Stage Users' \
@@ -56,6 +56,7 @@ declare -A NAGIOSMSGS=( \
                         ['ghosts']='Ghost Replicas' \
                         ['bind']='Anonymous BIND' \
                         ['msdcs']='Microsoft ADTrust' \
+                        ['replica']='Replication Status' \
                       )
 declare -i CHECKS_NO=${#NAGIOSMSGS[@]}
 
@@ -102,6 +103,7 @@ AVAILABLE OPTIONS:
     ghosts  - Ghost Replicas
     bind    - Anonymous BIND
     msdcs   - Microsoft ADTrust
+    replica - Replication Status
 -w  Warning threshold (0-${CHECKS_NO}), number of failed checks before alerting (default: 1)
 -c  Critical threshold (0-${CHECKS_NO}), number of failed checks before alerting (default: 2)
 -h  Print this help summary page
@@ -317,8 +319,12 @@ is_consistent() {
   local dir="$1"
 
   # shellcheck disable=SC2046
-  if diff --from-file $(grep -lv 'N/A' -r "$dir" || printf "%s" "$dir") &>/dev/null; then
-    printf "OK"
+  if diff --from-file $(grep -lv "N/A" -r "$dir" || printf "%s" "$dir") &>/dev/null; then
+    if grep -q "ERROR" -r "$dir"; then
+      printf "FAIL"
+    else
+      printf "OK"
+    fi
   else
     printf "FAIL"
   fi
@@ -622,7 +628,9 @@ certificates() {
   printf "%-${FIRST_COLUMN}s" "Certificates"
   for server in "${SERVERS[@]}"; do
     (
-    if ! count=$(query_ldap "ou=certificateRepository,ou=ca,o=ipaca" \
+    if ! query_ldap "${SUFFIX}" "cn=accounts" "dn" "one" &>/dev/null; then
+      count="ERROR"
+    elif ! count=$(query_ldap "ou=certificateRepository,ou=ca,o=ipaca" \
       "(certStatus=*)" \
       "dn" "one"); then
       count="N/A"
@@ -730,7 +738,9 @@ msdcs() {
   printf "%-${FIRST_COLUMN}s" "Microsoft ADTrust"
   for server in "${SERVERS[@]}"; do
     (
-    if (dig +short _kerberos._tcp.Default-First-Site-Name._sites.dc._msdcs."${DOMAIN}" SRV | grep -q "${server}"); then
+    if ! query_ldap "${SUFFIX}" "cn=accounts" "dn" "one" &>/dev/null; then
+      state="ERROR"
+    elif (dig +short _kerberos._tcp.Default-First-Site-Name._sites.dc._msdcs."${DOMAIN}" SRV | grep -q "${server}"); then
       state="YES"
     else
       state="NO"
@@ -752,14 +762,30 @@ msdcs() {
   fi
 }
 
+array_contains() {
+  local item="$1"
+  local -a array=("${@:2}")
+  local i=0
+
+  for i in "${array[@]}"; do
+    if [[ "$i" == "$item" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 replication() {
   local server="" agreements="" agreement="" state=""
   local -i i=0 max=0
   local dir="${TMP_DIR}/replication"
+  local dir_state="${TMP_DIR}/replication_state"
   # shellcheck disable=SC2155
   local suffix="$(sed -e 's@=@\\3D@g' -e 's@,@\\,@g' <<<"$SUFFIX")"
+  local -a ok_status=('0')
 
-  mkdir -p "$dir"
+  mkdir -p "$dir" "$dir_state"
   for server in "${SERVERS[@]}"; do
     (
     if ! agreements=$(query_ldap \
@@ -770,9 +796,13 @@ replication() {
       | sed -e "s/\.${DOMAIN}//g"); then
       agreements="ERROR"
     fi
+    state="OK"
     for agreement in $agreements; do
       printf "%s\n" "$agreement" >>"${dir}/${server}"
+      code=$(awk '{print $2}' <<<"$agreement")
+      array_contains "$code" "${ok_status[@]}" || state="FAIL"
     done
+    printf "%s\n" "$state" >>"${dir_state}/${server}"
     ) &
   done
   wait
@@ -799,8 +829,19 @@ replication() {
         state="FAIL"
       fi
     done
-    printf "%-${LAST_COLUMN}s\n" "$state"
+    state="$(is_consistent "$dir_state")"
+    if [[ $i -eq 1 ]]; then
+      printf "%-${LAST_COLUMN}s\n" "$state"
+    else
+      printf "%-${LAST_COLUMN}s\n" ""
+    fi
   done
+  if [[ $NAGIOS -eq 1 ]]; then
+    printf "%s\n" "$state" >> "${TMP_DIR}/nagios"
+    if [[ "$NAGIOSREPORT" == "replica" ]]; then
+      printf "%s\n" "$state" >> "${TMP_DIR}/$NAGIOSREPORT"
+    fi
+  fi
 }
 
 ghost_replicas() {

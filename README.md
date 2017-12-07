@@ -3,7 +3,7 @@ The tool checks consistency across FreeIPA servers.
 
 It can also be used as a Nagios/Opsview plug-in (check -n, -w and -c  options).
 
-The tool has been tested in FreeIPA 4.2/4.3/4.4 (Centos 7.2/7.3, Fedora 24) environments.
+The tool has been tested in FreeIPA 4.2/4.3/4.4/4.5 (CentOS 7.2/7.3/7.4, Fedora 24) environments.
 
 Requirements:
 * FreeIPA 4.2 or higher
@@ -39,6 +39,7 @@ AVAILABLE OPTIONS:
     ghosts  - Ghost Replicas
     bind    - Anonymous BIND
     msdcs   - Microsoft ADTrust
+    replica - Replication Status
 -w  Warning threshold (0-12), number of failed checks before alerting (default: 1)
 -c  Critical threshold (0-12), number of failed checks before alerting (default: 2)
 -h  Print this help summary page
@@ -64,14 +65,14 @@ LDAP Conflicts      NO       NO       OK
 Ghost Replicas      NO       NO       OK
 Anonymous BIND      YES      YES      OK
 Microsoft ADTrust   NO       NO       OK
-Replication Status  ipa02 0  ipa01 0
+Replication Status  ipa02 0  ipa01 0  OK
 ===========================================
 ```
 
 ## Nagios/Opsview plug-in mode
 ```
 $ ./ipa_check_consistency -H "ipa01 ipa02" -d ipa.domain.com -W '********' -n all
-OK - 14/14 checks passed
+OK - 15/15 checks passed
 $ echo $?
 0
 ```
