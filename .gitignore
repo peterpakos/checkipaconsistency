@@ -1,1 +1,6 @@
-*.passwd
+__pycache__
+*.pyc
+.idea
+.lock
+*.log
+config.py

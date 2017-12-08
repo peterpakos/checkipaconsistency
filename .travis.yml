@@ -1,19 +1,17 @@
-branches:
-  except:
-  - python
-language: bash
-addons:
-  apt:
-    sources:
-    - debian-sid
-    packages:
-    - shellcheck
-
+language: python
+python:
+  - "2.7"
+  - "3.6"
+install:
+  - pip install -r requirements.txt pycodestyle
+before_script:
+  - mv config_sample.py config.py
 script:
-- shellcheck ipa_check_consistency
+  - pycodestyle --max-line-length=120 ipa_check_consistency *.py
+  - python ./ipa_check_consistency --help
 notifications:
   email:
     on_success: change
     on_failure: always
     recipients:
-    - peter@pakos.uk
+      - peter@pakos.uk

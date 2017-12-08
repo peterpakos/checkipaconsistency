@@ -1,0 +1,3 @@
+pyldap
+prettytable
+dnspython

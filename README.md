@@ -1,89 +1,95 @@
 # ipa_check_consistency
-The tool checks consistency across FreeIPA servers.
+## Tool to check consistency across FreeIPA servers
 
-It can also be used as a Nagios/Opsview plug-in (check -n, -w and -c  options).
+The tool can be used as a standalone consistency checker as well as a Nagios/Opsview plug-in (check [Nagios section below](#nagios-plug-in-mode) for more info).
 
-The tool has been tested in FreeIPA 4.2/4.3/4.4/4.5 (CentOS 7.2/7.3/7.4, Fedora 24) environments.
+The script was originally written and developed in BASH (see [v1.3.0](https://github.com/peterpakos/ipa_check_consistency/tree/v1.3.0)) and eventually ported to Python in [v2.0.0](https://github.com/peterpakos/ipa_check_consistency/tree/v2.0.0).
+
+It has been tested with multiple FreeIPA 4.2+ deployments across a range of operating systems.
 
 Requirements:
-* FreeIPA 4.2 or higher
-* Bash 4.0 or higher
+* FreeIPA 4.2+
+* Python 2.7+/3.6+
+* Python modules listed in [requirements.txt](#python-modules)
 
-Any comments and improvement ideas are welcome.
+If you spot any problem or have any improvement ideas then feel free to open an issue and I will be glad to look at it for you.
 
-## Usage
+## Python modules
+Run the following command to install required Python modules:
 ```
-$ ./ipa_check_consistency -h
-Usage: ipa_check_consistency [OPTIONS]
-AVAILABLE OPTIONS:
--H  List of IPA servers (e.g.: "server1 server2.domain server3")
-    Both short names and FQDNs are supported (FQDN if not within IPA domain)
--d  IPA domain (e.g.: "ipa.domain.com")
--s  LDAP root suffix, if not domain based (default: "dc=ipa,dc=domain,dc=com")
--D  BIND DN (default: cn=Directory Manager)
--W  BIND password (prompt for one if not supplied)
--p  Password file (default: ipa_check_consistency.passwd)
--n  Nagios plugin mode
-    all     - all checks (-w and -c only relevant if -na used), default if incorrect value is passed
-    users   - Active Users
-    ustage  - Stage Users
-    upres   - Preserved Users
-    ugroups - User Groups
-    hosts   - Hosts
-    hgroups - Host Groups
-    hbac    - HBAC Rules
-    sudo    - SUDO Rules
-    zones   - DNS Zones
-    certs   - Certificates
-    ldap    - LDAP Conflicts
-    ghosts  - Ghost Replicas
-    bind    - Anonymous BIND
-    msdcs   - Microsoft ADTrust
-    replica - Replication Status
--w  Warning threshold (0-12), number of failed checks before alerting (default: 1)
--c  Critical threshold (0-12), number of failed checks before alerting (default: 2)
--h  Print this help summary page
--v  Print version number
+$ pip install -r requirements.txt
+```
+
+## Configuration
+Edit the sample config file `config_sample.py` and save it as `config.py`.
+
+## Help
+```
+$ ./ipa_check_consistency --help
+usage: ipa_check_consistency [--version] [--help] [--debug] [--verbose]
+                             [--quiet] [-H] [-B]
+                             [-n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]]
+                             [-w WARNING] [-c CRITICAL]
+
+Tool to check consistency across FreeIPA servers
+
+optional arguments:
+  --version             show program's version number and exit
+  --help                show this help message and exit
+  --debug               debugging mode
+  --verbose             verbose logging mode
+  --quiet               don't log to console
+  -H, --disable-header  disable table header
+  -B, --disable-border  disable table border
+  -n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]
+                        Nagios plugin mode
+  -w WARNING, --warning WARNING
+                        number of failed checks before warning (default: 1)
+  -c CRITICAL, --critical CRITICAL
+                        number of failed checks before critical (default: 2)
 ```
 
 ## Example
 ```
-$ ./ipa_check_consistency -d ipa.domain.com -W '********'
-FreeIPA servers:    ipa01    ipa02    STATE
-===========================================
-Active Users        4        4        OK
-Stage Users         0        0        OK
-Preserved Users     0        0        OK
-User Groups         5        5        OK
-Hosts               10       10       OK
-Host Groups         1        1        OK
-HBAC Rules          1        1        OK
-SUDO Rules          1        1        OK
-DNS Zones           11       11       OK
-Certificates        N/A      N/A      OK
-LDAP Conflicts      NO       NO       OK
-Ghost Replicas      NO       NO       OK
-Anonymous BIND      YES      YES      OK
-Microsoft ADTrust   NO       NO       OK
-Replication Status  ipa02 0  ipa01 0  OK
-===========================================
+$ ./ipa_check_consistency
++--------------------+----------+----------+----------+-----------+----------+----------+-------+
+| FreeIPA servers:   | ipa01    | ipa02    | ipa03    | ipa04     | ipa05    | ipa06    | STATE |
++--------------------+----------+----------+----------+-----------+----------+----------+-------+
+| Active Users       | 1199     | 1199     | 1199     | 1199      | 1199     | 1199     | OK    |
+| Stage Users        | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
+| Preserved Users    | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
+| User Groups        | 55       | 55       | 55       | 55        | 55       | 55       | OK    |
+| Hosts              | 357      | 357      | 357      | 357       | 357      | 357      | OK    |
+| Host Groups        | 29       | 29       | 29       | 29        | 29       | 29       | OK    |
+| HBAC Rules         | 3        | 3        | 3        | 3         | 3        | 3        | OK    |
+| SUDO Rules         | 2        | 2        | 2        | 2         | 2        | 2        | OK    |
+| DNS Zones          | 114      | 114      | 114      | 114       | 114      | 114      | OK    |
+| Certificates       | N/A      | N/A      | N/A      | N/A       | N/A      | N/A      | OK    |
+| LDAP Conflicts     | NO       | NO       | NO       | NO        | NO       | NO       | OK    |
+| Ghost Replicas     | NO       | NO       | NO       | NO        | NO       | NO       | OK    |
+| Anonymous BIND     | YES      | YES      | YES      | YES       | YES      | YES      | OK    |
+| Microsoft ADTrust  | NO       | NO       | NO       | NO        | NO       | NO       | OK    |
+| Replication Status | ipa03 0  | ipa03 0  | ipa04 0  | ipa03 0   | ipa03 0  | ipa04 0  | OK    |
+|                    | ipa04 0  | ipa04 0  | ipa05 0  | ipa01 0   | ipa01 0  |          |       |
+|                    | ipa05 0  | ipa05 0  | ipa01 0  | ipa02 0   | ipa02 0  |          |       |
+|                    | ipa02 0  | ipa01 0  | ipa02 0  | ipa06 0   |          |          |       |
++--------------------+----------+----------+----------+-----------+----------+----------+-------+
+
 ```
 
-## Nagios/Opsview plug-in mode
+## Nagios plug-in mode
+Perform all checks using default warning/critical thresholds:
 ```
-$ ./ipa_check_consistency -H "ipa01 ipa02" -d ipa.domain.com -W '********' -n all
+$ ./ipa_check_consistency -n all
 OK - 15/15 checks passed
-$ echo $?
-0
 ```
+Perform specific check with custom alerting thresholds:
 ```
-$ ./ipa_check_consistency -H "ipa01 ipa02" -d ipa.domain.com -W '********' -n users
-OK - Active Users consistency
-$ echo $?
-0
+$ ./ipa_check_consistency -n users -w 2 -c3
+OK - Active Users
 ```
 
-## LDAP Conflicts
+### LDAP Conflicts
 Normally conflicting changes between replicas are resolved automatically (the most recent change takes precedence).
 However, there are cases where manual intervention is required. If you see LDAP conflicts in the output of this script,
 you need to find the conflicting entries and decide which of them should be preserved/deleted.
