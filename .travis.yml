@@ -1,11 +1,12 @@
 language: python
 python:
   - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
   - "3.6"
 install:
   - pip install -r requirements.txt pycodestyle
-before_script:
-  - mv config_sample.py config.py
 script:
   - pycodestyle --max-line-length=120 ipa_check_consistency *.py
   - python ./ipa_check_consistency --help

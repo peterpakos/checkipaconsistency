@@ -9,7 +9,7 @@ It has been tested with multiple FreeIPA 4.2+ deployments across a range of oper
 
 Requirements:
 * FreeIPA 4.2+
-* Python 2.7+/3.6+
+* Python 2.7+/3.3+
 * Python modules listed in [requirements.txt](#python-modules)
 
 If you spot any problem or have any improvement ideas then feel free to open an issue and I will be glad to look at it for you.
@@ -21,12 +21,12 @@ $ pip install -r requirements.txt
 ```
 
 ## Configuration
-Edit the sample config file `config_sample.py` and save it as `config.py`.
+Edit the sample config file `ipa_check_consistency.cfg_sample` and save it as either `~/.ipa_check_consistency.cfg` or `ipa_check_consistency.cfg` in the script's directory.
 
 ## Help
 ```
 $ ./ipa_check_consistency --help
-usage: ipa_check_consistency [-H [HOST [HOST ...]]] [-d [DOMAIN]]
+usage: ipa_check_consistency [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]]
                              [-D [BINDDN]] [-W [BINDPW]] [--version] [--help]
                              [--debug] [--verbose] [--quiet] [--no-header]
                              [--no-border]
@@ -36,7 +36,7 @@ usage: ipa_check_consistency [-H [HOST [HOST ...]]] [-d [DOMAIN]]
 Tool to check consistency across FreeIPA servers
 
 optional arguments:
-  -H [HOST [HOST ...]], --host [HOST [HOST ...]]
+  -H [HOSTS [HOSTS ...]], --hosts [HOSTS [HOSTS ...]]
                         list of IPA servers
   -d [DOMAIN], --domain [DOMAIN]
                         IPA domain
@@ -61,7 +61,7 @@ optional arguments:
 
 ## Example
 ```
-$ ./ipa_check_consistency
+$ ./ipa_check_consistency -d ipa.example.com -W ********
 +--------------------+----------+----------+----------+-----------+----------+----------+-------+
 | FreeIPA servers:   | ipa01    | ipa02    | ipa03    | ipa04     | ipa05    | ipa06    | STATE |
 +--------------------+----------+----------+----------+-----------+----------+----------+-------+
@@ -84,6 +84,18 @@ $ ./ipa_check_consistency
 |                    | ipa05 0  | ipa05 0  | ipa01 0  | ipa02 0   | ipa02 0  |          |       |
 |                    | ipa02 0  | ipa01 0  | ipa02 0  | ipa06 0   |          |          |       |
 +--------------------+----------+----------+----------+-----------+----------+----------+-------+
+
+```
+## Debug mode
+If you experience any problems with the tool, check the log file (`ipa_check_consistency.log`) or try running it in the debug mode:
+
+```
+$ ./ipa_check_consistency --debug
+2017-12-18 15:00:07,567 [ipa_check_consistency] DEBUG Namespace(binddn=None, bindpw=None, critical=2, debug=True, disable_border=False, disable_header=False, domain=None, hosts=None, nagios_check=None, quiet=False, verbose=False, warning=1)
+2017-12-18 15:00:07,568 [ipa_check_consistency] DEBUG Initialising...
+2017-12-18 15:00:07,568 [ipa_check_consistency] DEBUG Looking for config files
+2017-12-18 15:00:07,568 [ipa_check_consistency] DEBUG Config file not found
+2017-12-18 15:00:07,568 [ipa_check_consistency] CRITICAL IPA domain not set
 
 ```
 

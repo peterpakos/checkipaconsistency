@@ -30,81 +30,57 @@ from logger import get_logger
 from FreeIPAServer import FreeIPAServer
 from prettytable import PrettyTable
 import dns.resolver
+from collections import OrderedDict
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 
 class Main(object):
-    VERSION = '2.1.0'
+    VERSION = '2.2.0'
 
     def __init__(self):
-        if not self._lock_file():
-            print('The script is already running, exiting...', file=sys.stderr)
-            exit(1)
-
-        self._args = self._parse_args()
-        self._log = get_logger(debug=self._args.debug, quiet=self._args.quiet, verbose=self._args.verbose)
+        self._app_name = os.path.basename(__file__)
+        self._app_dir = os.path.dirname(os.path.realpath(__file__))
+        self._lock()
+        self._parse_args()
+        self._log = get_logger(debug=self._args.debug, quiet=self._args.quiet, verbose=self._args.verbose,
+                               file_level='DEBUG')
         self._log.debug(self._args)
         self._log.debug('Initialising...')
 
-        domain = None
-        servers = []
-        binddn = 'cn=Directory Manager'
-        bindpw = None
+        self._domain = None
+        self._hosts = []
+        self._binddn = 'cn=Directory Manager'
+        self._bindpw = None
 
-        # Reading configuration from file
-        if not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/config.py'):
-            self._log.error('Config file not found')
-        else:
-            self._log.debug('Reading config file')
-            from config import Config
-
-            if hasattr(Config, 'DOMAIN'):
-                domain = Config.DOMAIN
-                self._log.debug('DOMAIN = %s' % domain)
-            else:
-                self._log.debug('DOMAIN not set in config file')
-
-            if hasattr(Config, 'SERVERS'):
-                servers = Config.SERVERS
-                self._log.debug('SERVERS = %s' % servers)
-            else:
-                self._log.debug('SERVERS not set in config file')
-
-            if hasattr(Config, 'BINDDN'):
-                binddn = Config.BINDDN
-                self._log.debug('BINDDN = %s' % binddn)
-            else:
-                self._log.debug('BINDDN not set in config file')
-
-            if hasattr(Config, 'BINDPW'):
-                bindpw = Config.BINDPW
-                self._log.debug('BINDPW = ********')
-            else:
-                self._log.debug('BINDPW not set in config file')
+        self._load_config()
 
         if self._args.domain:
             self._log.debug('Domain set by argument')
-            domain = self._args.domain
+            self._domain = self._args.domain
 
-        if not domain:
+        if not self._domain:
             self._log.critical('IPA domain not set')
             exit(1)
         else:
-            self._log.debug('IPA domain: %s' % domain)
+            self._log.debug('IPA domain: %s' % self._domain)
 
-        if self._args.host:
+        if self._args.hosts:
             self._log.debug('Server list set by argument')
-            servers = self._args.host
+            self._hosts = self._args.hosts
 
-        for i, server in enumerate(servers):
-            if '.' not in server:
-                servers[i] = server + '.' + domain
-            if not server or ' ' in server:
-                self._log.critical('Incorrect server name: %s' % server)
+        for i, host in enumerate(self._hosts):
+            if '.' not in host:
+                self._hosts[i] = host + '.' + self._domain
+            if not host or ' ' in host:
+                self._log.critical('Incorrect server name: %s' % host)
                 exit(1)
 
-        if not servers:
+        if not self._hosts:
             self._log.debug('Searching for IPA servers in DNS')
-            record = '_ldap._tcp.%s' % domain
+            record = '_ldap._tcp.%s' % self._domain
             answers = []
 
             try:
@@ -114,61 +90,60 @@ class Main(object):
                 exit(1)
 
             for answer in answers:
-                servers.append(str(answer).split(' ')[3].rstrip('.'))
+                self._hosts.append(str(answer).split(' ')[3].rstrip('.'))
 
-        self._log.debug('IPA servers: %s' % ', '.join(servers))
+        self._log.debug('IPA servers: %s' % ', '.join(self._hosts))
 
         if self._args.binddn:
             self._log.debug('Bind DN set by argument')
-            binddn = self._args.binddn
+            self._binddn = self._args.binddn
 
-        if not binddn:
+        if not self._binddn:
             self._log.critical('Bind DN not set')
             exit(1)
 
         if self._args.bindpw:
             self._log.debug('Bind password set by argument')
-            bindpw = self._args.bindpw
+            self._bindpw = self._args.bindpw
 
-        if not bindpw:
+        if not self._bindpw:
             self._log.critical('Bind password not set')
             exit(1)
 
-        self._servers = {}
-        for fqdn in servers:
-            self._servers[fqdn] = FreeIPAServer(fqdn, binddn, bindpw)
+        self._servers = OrderedDict()
+        for fqdn in self._hosts:
+            self._servers[fqdn] = FreeIPAServer(fqdn, self._binddn, self._bindpw)
 
-        self._checks = {
-            'users': 'Active Users',
-            'ustage': 'Stage Users',
-            'upres': 'Preserved Users',
-            'ugroups': 'User Groups',
-            'hosts': 'Hosts',
-            'hgroups': 'Host Groups',
-            'hbac': 'HBAC Rules',
-            'sudo': 'SUDO Rules',
-            'zones': 'DNS Zones',
-            'certs': 'Certificates',
-            'ldap': 'LDAP Conflicts',
-            'ghosts': 'Ghost Replicas',
-            'bind': 'Anonymous BIND',
-            'msdcs': 'Microsoft ADTrust',
-            'replica': 'Replication Status'
-        }
+        self._checks = OrderedDict([
+            ('users', 'Active Users'),
+            ('ustage', 'Stage Users'),
+            ('upres', 'Preserved Users'),
+            ('ugroups', 'User Groups'),
+            ('hosts', 'Hosts'),
+            ('hgroups', 'Host Groups'),
+            ('hbac', 'HBAC Rules'),
+            ('sudo', 'SUDO Rules'),
+            ('zones', 'DNS Zones'),
+            ('certs', 'Certificates'),
+            ('ldap', 'LDAP Conflicts'),
+            ('ghosts', 'Ghost Replicas'),
+            ('bind', 'Anonymous BIND'),
+            ('msdcs', 'Microsoft ADTrust'),
+            ('replica', 'Replication Status')
+        ])
 
-    @staticmethod
-    def _lock_file(lock_file='.lock'):
+    def _lock(self):
+        lock_file = self._app_dir + '/.lock'
         file_descriptor = os.open(lock_file, os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
         try:
             fcntl.lockf(file_descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except IOError:
-            return False
-
-        return True
+            print('The script is already running, exiting...', file=sys.stderr)
+            exit(1)
 
     def _parse_args(self):
         parser = argparse.ArgumentParser(description='Tool to check consistency across FreeIPA servers', add_help=False)
-        parser.add_argument('-H', '--host', nargs='*', dest='host', help='list of IPA servers')
+        parser.add_argument('-H', '--hosts', nargs='*', dest='hosts', help='list of IPA servers')
         parser.add_argument('-d', '--domain', nargs='?', dest='domain', help='IPA domain')
         parser.add_argument('-D', '--binddn', nargs='?', dest='binddn', help='Bind DN (default: cn=Directory Manager)')
         parser.add_argument('-W', '--bindpw', nargs='?', dest='bindpw', help='Bind password')
@@ -196,7 +171,58 @@ class Main(object):
         elif not args.nagios_check:
             args.nagios_check = 'all'
 
-        return args
+        self._args = args
+
+    def _load_config(self):
+        self._log.debug('Looking for config files')
+        config_file = None
+        file_name = os.path.splitext(self._app_name)[0] + '.cfg'
+        config_files = [
+            os.path.expanduser('~') + '/.' + file_name,
+            self._app_dir + '/' + file_name
+        ]
+
+        for file in config_files:
+            if os.path.isfile(file):
+                config_file = file
+                self._log.debug('Found config file %s' % config_file)
+                break
+
+        if not config_file:
+            self._log.debug('Config file not found')
+            return
+
+        config = configparser.ConfigParser()
+        config.read(config_file)
+
+        if not config.has_section('IPA'):
+            self._log.debug('Config file has no IPA section')
+            return
+
+        if config.has_option('IPA', 'DOMAIN'):
+            self._domain = config.get('IPA', 'DOMAIN')
+            self._log.debug('DOMAIN = %s' % self._domain)
+        else:
+            self._log.debug('IPA.DOMAIN not set')
+
+        if config.has_option('IPA', 'HOSTS'):
+            self._hosts = config.get('IPA', 'HOSTS')
+            self._log.debug('HOSTS = %s' % self._hosts)
+            self._hosts = self._hosts.replace(',', ' ').split()
+        else:
+            self._log.debug('IPA.SERVERS not set')
+
+        if config.has_option('IPA', 'BINDDN'):
+            self._binddn = config.get('IPA', 'BINDDN')
+            self._log.debug('BINDDN = %s' % self._binddn)
+        else:
+            self._log.debug('IPA.BINDDN not set')
+
+        if config.has_option('IPA', 'BINDPW'):
+            self._bindpw = config.get('IPA', 'BINDPW')
+            self._log.debug('BINDPW = ********')
+        else:
+            self._log.debug('IPA.BINDPW not set')
 
     def run(self):
         self._log.debug('Starting...')

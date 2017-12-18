@@ -1,0 +1,13 @@
+[IPA]
+
+# IPA domain
+DOMAIN = ipa.example.com
+
+# List of IPA servers (comma/space separated)
+HOSTS = ipa01, ipa02, ipa03, ipa04, ipa05, ipa06
+
+# Bind DN, normally set to cn=Directory Manager
+BINDDN = cn=Directory Manager
+
+# Bind password
+BINDPW = ********
