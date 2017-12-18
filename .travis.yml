@@ -8,8 +8,8 @@ python:
 install:
   - pip install -r requirements.txt pycodestyle
 script:
-  - pycodestyle --max-line-length=120 ipa_check_consistency *.py
-  - python ./ipa_check_consistency --help
+  - pycodestyle --max-line-length=120 check_ipa_consistency *.py
+  - python ./check_ipa_consistency --help
 notifications:
   email:
     on_success: change

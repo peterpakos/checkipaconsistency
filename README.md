@@ -1,9 +1,10 @@
-# ipa_check_consistency
+# check_ipa_consistency
 ## Tool to check consistency across FreeIPA servers
+### Formerly known as ipa_check_consistency
 
 The tool can be used as a standalone consistency checker as well as a Nagios/Opsview plug-in (check [Nagios section below](#nagios-plug-in-mode) for more info).
 
-The script was originally written and developed in BASH (see [v1.3.0](https://github.com/peterpakos/ipa_check_consistency/tree/v1.3.0)) and eventually ported to Python in v2.0.0.
+The script was originally written and developed in BASH (see [v1.3.0](https://github.com/peterpakos/check_ipa_consistency/tree/v1.3.0)) and eventually ported to Python in v2.0.0.
 
 It has been tested with multiple FreeIPA 4.2+ deployments across a range of operating systems.
 
@@ -21,12 +22,12 @@ $ pip install -r requirements.txt
 ```
 
 ## Configuration
-Edit the sample config file `ipa_check_consistency.cfg_sample` and save it as either `~/.ipa_check_consistency.cfg` or `ipa_check_consistency.cfg` in the script's directory.
+Edit the sample config file `check_ipa_consistency.cfg_sample` and save it as either `~/.check_ipa_consistency.cfg` or `check_ipa_consistency.cfg` in the script's directory.
 
 ## Help
 ```
-$ ./ipa_check_consistency --help
-usage: ipa_check_consistency [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]]
+$ ./check_ipa_consistency --help
+usage: check_ipa_consistency [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]]
                              [-D [BINDDN]] [-W [BINDPW]] [--version] [--help]
                              [--debug] [--verbose] [--quiet] [--no-header]
                              [--no-border]
@@ -61,7 +62,7 @@ optional arguments:
 
 ## Example
 ```
-$ ./ipa_check_consistency -d ipa.example.com -W ********
+$ ./check_ipa_consistency -d ipa.example.com -W ********
 +--------------------+----------+----------+----------+-----------+----------+----------+-------+
 | FreeIPA servers:   | ipa01    | ipa02    | ipa03    | ipa04     | ipa05    | ipa06    | STATE |
 +--------------------+----------+----------+----------+-----------+----------+----------+-------+
@@ -87,27 +88,27 @@ $ ./ipa_check_consistency -d ipa.example.com -W ********
 
 ```
 ## Debug mode
-If you experience any problems with the tool, check the log file (`ipa_check_consistency.log`) or try running it in the debug mode:
+If you experience any problems with the tool, check the log file (`check_ipa_consistency.log`) or try running it in the debug mode:
 
 ```
-$ ./ipa_check_consistency --debug
-2017-12-18 15:00:07,567 [ipa_check_consistency] DEBUG Namespace(binddn=None, bindpw=None, critical=2, debug=True, disable_border=False, disable_header=False, domain=None, hosts=None, nagios_check=None, quiet=False, verbose=False, warning=1)
-2017-12-18 15:00:07,568 [ipa_check_consistency] DEBUG Initialising...
-2017-12-18 15:00:07,568 [ipa_check_consistency] DEBUG Looking for config files
-2017-12-18 15:00:07,568 [ipa_check_consistency] DEBUG Config file not found
-2017-12-18 15:00:07,568 [ipa_check_consistency] CRITICAL IPA domain not set
+$ ./check_ipa_consistency --debug
+2017-12-18 15:00:07,567 [check_ipa_consistency] DEBUG Namespace(binddn=None, bindpw=None, critical=2, debug=True, disable_border=False, disable_header=False, domain=None, hosts=None, nagios_check=None, quiet=False, verbose=False, warning=1)
+2017-12-18 15:00:07,568 [check_ipa_consistency] DEBUG Initialising...
+2017-12-18 15:00:07,568 [check_ipa_consistency] DEBUG Looking for config files
+2017-12-18 15:00:07,568 [check_ipa_consistency] DEBUG Config file not found
+2017-12-18 15:00:07,568 [check_ipa_consistency] CRITICAL IPA domain not set
 
 ```
 
 ## Nagios plug-in mode
 Perform all checks using default warning/critical thresholds:
 ```
-$ ./ipa_check_consistency -n all
+$ ./check_ipa_consistency -n all
 OK - 15/15 checks passed
 ```
 Perform specific check with custom alerting thresholds:
 ```
-$ ./ipa_check_consistency -n users -w 2 -c3
+$ ./check_ipa_consistency -n users -w 2 -c3
 OK - Active Users
 ```
 

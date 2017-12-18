@@ -38,7 +38,7 @@ except ImportError:
 
 
 class Main(object):
-    VERSION = '2.2.0'
+    VERSION = '2.3.0'
 
     def __init__(self):
         self._app_name = os.path.basename(__file__)
