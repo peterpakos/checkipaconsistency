@@ -3,7 +3,7 @@
 
 The tool can be used as a standalone consistency checker as well as a Nagios/Opsview plug-in (check [Nagios section below](#nagios-plug-in-mode) for more info).
 
-The script was originally written and developed in BASH (see [v1.3.0](https://github.com/peterpakos/ipa_check_consistency/tree/v1.3.0)) and eventually ported to Python in [v2.0.0](https://github.com/peterpakos/ipa_check_consistency/tree/v2.0.0).
+The script was originally written and developed in BASH (see [v1.3.0](https://github.com/peterpakos/ipa_check_consistency/tree/v1.3.0)) and eventually ported to Python in v2.0.0.
 
 It has been tested with multiple FreeIPA 4.2+ deployments across a range of operating systems.
 
@@ -26,21 +26,31 @@ Edit the sample config file `config_sample.py` and save it as `config.py`.
 ## Help
 ```
 $ ./ipa_check_consistency --help
-usage: ipa_check_consistency [--version] [--help] [--debug] [--verbose]
-                             [--quiet] [-H] [-B]
+usage: ipa_check_consistency [-H [HOST [HOST ...]]] [-d [DOMAIN]]
+                             [-D [BINDDN]] [-W [BINDPW]] [--version] [--help]
+                             [--debug] [--verbose] [--quiet] [--no-header]
+                             [--no-border]
                              [-n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]]
                              [-w WARNING] [-c CRITICAL]
 
 Tool to check consistency across FreeIPA servers
 
 optional arguments:
+  -H [HOST [HOST ...]], --host [HOST [HOST ...]]
+                        list of IPA servers
+  -d [DOMAIN], --domain [DOMAIN]
+                        IPA domain
+  -D [BINDDN], --binddn [BINDDN]
+                        Bind DN (default: cn=Directory Manager)
+  -W [BINDPW], --bindpw [BINDPW]
+                        Bind password
   --version             show program's version number and exit
   --help                show this help message and exit
   --debug               debugging mode
-  --verbose             verbose logging mode
-  --quiet               don't log to console
-  -H, --disable-header  disable table header
-  -B, --disable-border  disable table border
+  --verbose             verbose mode
+  --quiet               do not log to console
+  --no-header           disable table header
+  --no-border           disable table border
   -n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]
                         Nagios plugin mode
   -w WARNING, --warning WARNING

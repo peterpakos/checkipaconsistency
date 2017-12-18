@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Tool to check consistency across FreeIPA servers
@@ -26,14 +26,14 @@ import os
 import sys
 import argparse
 import fcntl
-from config import Config
 from logger import get_logger
 from FreeIPAServer import FreeIPAServer
 from prettytable import PrettyTable
+import dns.resolver
 
 
 class Main(object):
-    VERSION = '2.0.0'
+    VERSION = '2.1.0'
 
     def __init__(self):
         if not self._lock_file():
@@ -44,6 +44,100 @@ class Main(object):
         self._log = get_logger(debug=self._args.debug, quiet=self._args.quiet, verbose=self._args.verbose)
         self._log.debug(self._args)
         self._log.debug('Initialising...')
+
+        domain = None
+        servers = []
+        binddn = 'cn=Directory Manager'
+        bindpw = None
+
+        # Reading configuration from file
+        if not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/config.py'):
+            self._log.error('Config file not found')
+        else:
+            self._log.debug('Reading config file')
+            from config import Config
+
+            if hasattr(Config, 'DOMAIN'):
+                domain = Config.DOMAIN
+                self._log.debug('DOMAIN = %s' % domain)
+            else:
+                self._log.debug('DOMAIN not set in config file')
+
+            if hasattr(Config, 'SERVERS'):
+                servers = Config.SERVERS
+                self._log.debug('SERVERS = %s' % servers)
+            else:
+                self._log.debug('SERVERS not set in config file')
+
+            if hasattr(Config, 'BINDDN'):
+                binddn = Config.BINDDN
+                self._log.debug('BINDDN = %s' % binddn)
+            else:
+                self._log.debug('BINDDN not set in config file')
+
+            if hasattr(Config, 'BINDPW'):
+                bindpw = Config.BINDPW
+                self._log.debug('BINDPW = ********')
+            else:
+                self._log.debug('BINDPW not set in config file')
+
+        if self._args.domain:
+            self._log.debug('Domain set by argument')
+            domain = self._args.domain
+
+        if not domain:
+            self._log.critical('IPA domain not set')
+            exit(1)
+        else:
+            self._log.debug('IPA domain: %s' % domain)
+
+        if self._args.host:
+            self._log.debug('Server list set by argument')
+            servers = self._args.host
+
+        for i, server in enumerate(servers):
+            if '.' not in server:
+                servers[i] = server + '.' + domain
+            if not server or ' ' in server:
+                self._log.critical('Incorrect server name: %s' % server)
+                exit(1)
+
+        if not servers:
+            self._log.debug('Searching for IPA servers in DNS')
+            record = '_ldap._tcp.%s' % domain
+            answers = []
+
+            try:
+                answers = dns.resolver.query(record, 'SRV')
+            except dns.resolver.NXDOMAIN:
+                self._log.critical('IPA servers not set, also failed to find any in DNS')
+                exit(1)
+
+            for answer in answers:
+                servers.append(str(answer).split(' ')[3].rstrip('.'))
+
+        self._log.debug('IPA servers: %s' % ', '.join(servers))
+
+        if self._args.binddn:
+            self._log.debug('Bind DN set by argument')
+            binddn = self._args.binddn
+
+        if not binddn:
+            self._log.critical('Bind DN not set')
+            exit(1)
+
+        if self._args.bindpw:
+            self._log.debug('Bind password set by argument')
+            bindpw = self._args.bindpw
+
+        if not bindpw:
+            self._log.critical('Bind password not set')
+            exit(1)
+
+        self._servers = {}
+        for fqdn in servers:
+            self._servers[fqdn] = FreeIPAServer(fqdn, binddn, bindpw)
+
         self._checks = {
             'users': 'Active Users',
             'ustage': 'Stage Users',
@@ -62,11 +156,6 @@ class Main(object):
             'replica': 'Replication Status'
         }
 
-        self._servers = {}
-
-        for server in Config.SERVERS:
-            self._servers[server] = FreeIPAServer(server, Config.DOMAIN, Config.BINDDN, Config.BINDPW)
-
     @staticmethod
     def _lock_file(lock_file='.lock'):
         file_descriptor = os.open(lock_file, os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
@@ -79,16 +168,18 @@ class Main(object):
 
     def _parse_args(self):
         parser = argparse.ArgumentParser(description='Tool to check consistency across FreeIPA servers', add_help=False)
+        parser.add_argument('-H', '--host', nargs='*', dest='host', help='list of IPA servers')
+        parser.add_argument('-d', '--domain', nargs='?', dest='domain', help='IPA domain')
+        parser.add_argument('-D', '--binddn', nargs='?', dest='binddn', help='Bind DN (default: cn=Directory Manager)')
+        parser.add_argument('-W', '--bindpw', nargs='?', dest='bindpw', help='Bind password')
         parser.add_argument('--version', action='version',
                             version='%s %s' % (os.path.basename(sys.argv[0]), self.VERSION))
         parser.add_argument('--help', action='help', help='show this help message and exit')
         parser.add_argument('--debug', action='store_true', dest='debug', help='debugging mode')
-        parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose logging mode')
-        parser.add_argument('--quiet', action='store_true', dest='quiet', help="don't log to console")
-        parser.add_argument('-H', '--disable-header', action='store_true', dest='disable_header',
-                            help='disable table header')
-        parser.add_argument('-B', '--disable-border', action='store_true', dest='disable_border',
-                            help='disable table border')
+        parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose mode')
+        parser.add_argument('--quiet', action='store_true', dest='quiet', help='do not log to console')
+        parser.add_argument('--no-header', action='store_true', dest='disable_header', help='disable table header')
+        parser.add_argument('--no-border', action='store_true', dest='disable_border', help='disable table border')
         parser.add_argument('-n', nargs='?', dest='nagios_check', help='Nagios plugin mode',
                             default='no', choices=['', 'all', 'users', 'ustage', 'upres', 'ugroups', 'hosts', 'hgroups',
                                                    'hbac', 'sudo', 'zones', 'certs', 'ldap', 'ghosts', 'bind', 'msdcs',

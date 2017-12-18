@@ -29,16 +29,16 @@ import dns.resolver
 
 
 class FreeIPAServer(object):
-    def __init__(self, hostname, domain, binddn, bindpw):
+    def __init__(self, fqdn, binddn, bindpw):
         self._log = logging.getLogger()
-        self._log.debug('Initialising FreeIPA server %s' % hostname)
-        self.hostname = hostname
-        self.hostname_short = hostname.partition('.')[0]
-        self._domain = domain
+        self._log.debug('Initialising FreeIPA server %s' % fqdn)
+        self.fqdn = fqdn
+        self.hostname_short = fqdn.partition('.')[0]
+        self._domain = fqdn.partition('.')[2]
         self._binddn = binddn
         self._bindpw = bindpw
-        self._url = 'ldaps://' + hostname
-        self._base_dn = 'dc=' + hostname.partition('.')[2].replace('.', ',dc=')
+        self._url = 'ldaps://' + fqdn
+        self._base_dn = 'dc=' + fqdn.partition('.')[2].replace('.', ',dc=')
         self._active_user_base = 'cn=users,cn=accounts,' + self._base_dn
         self._stage_user_base = 'cn=staged users,cn=accounts,cn=provisioning,' + self._base_dn
         self._preserved_user_base = 'cn=deleted users,cn=accounts,cn=provisioning,' + self._base_dn
@@ -46,13 +46,14 @@ class FreeIPAServer(object):
 
         try:
             self._conn = ldap.initialize(self._url)
+            self._conn.set_option(ldap.OPT_NETWORK_TIMEOUT, 3)
             self._conn.simple_bind_s(self._binddn, self._bindpw)
         except (
             ldap.SERVER_DOWN,
             ldap.NO_SUCH_OBJECT,
             ldap.INVALID_CREDENTIALS
         ) as err:
-            self._log.critical('Bind error: %s' % err.message['desc'])
+            self._log.critical('Bind error: %s (%s)' % (err.message['desc'], self.fqdn))
             exit(1)
 
         self.users = self._count_users(user_base='active')
@@ -208,7 +209,7 @@ class FreeIPAServer(object):
             return 'NO'
 
         for answer in answers:
-            if self.hostname in answer.to_text():
+            if self.fqdn in answer.to_text():
                 return 'YES'
 
         return 'NO'

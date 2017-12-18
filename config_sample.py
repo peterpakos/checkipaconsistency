@@ -24,14 +24,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 class Config(object):
-    SERVERS = [
-        'ipa01.ipa.domain.com',
-        'ipa02.ipa.domain.com',
-        'ipa03.ipa.domain.com',
-        'ipa04.ipa.domain.com',
-        'ipa05.ipa.domain.com',
-        'ipa06.ipa.domain.com'
-    ]
+    # IPA domain
     DOMAIN = 'ipa.domain.com'
+
+    # List of IPA servers
+    SERVERS = ['ipa01', 'ipa02', 'ipa03', 'ipa04', 'ipa05', 'ipa06']
+
+    # Bind DN, normally set to 'cn=Directory Manager'
     BINDDN = 'cn=Directory Manager'
+
+    # Bind password
     BINDPW = 'xxx'
