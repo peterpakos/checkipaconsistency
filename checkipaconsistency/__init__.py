@@ -1,11 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#  -*- coding: utf-8 -*-
 """
-Tool to check consistency across FreeIPA servers
+checkipaconsistency package
 
 Author: Peter Pakos <peter.pakos@wandisco.com>
 
 Copyright (C) 2017 WANdisco
+
+This file is part of ipa_check_consistency.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,7 +22,4 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from checkipaconsistency.main import main
-
-if __name__ == '__main__':
-    main()
+VERSION = '2.5.0'

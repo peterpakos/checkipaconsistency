@@ -4,29 +4,45 @@
 
 The tool can be used as a standalone consistency checker as well as a Nagios/Opsview plug-in (check [Nagios section below](#nagios-plug-in-mode) for more info).
 
-The script was originally written and developed in BASH (see [v1.3.0](https://github.com/peterpakos/check_ipa_consistency/tree/v1.3.0)) and eventually ported to Python in v2.0.0.
+The script was originally written and developed in BASH (until version [v1.3.0](https://github.com/peterpakos/check_ipa_consistency/tree/v1.3.0)) and eventually ported to Python in v2.0.0.
 
 It has been tested with multiple FreeIPA 4.2+ deployments across a range of operating systems.
 
 Requirements:
 * FreeIPA 4.2+
 * Python 2.7+/3.3+
-* Python modules listed in [requirements.txt](#python-modules)
+* Python modules listed in [requirements.txt](https://github.com/peterpakos/check_ipa_consistency/blob/master/requirements.txt)
 
-If you spot any problem or have any improvement ideas then feel free to open an issue and I will be glad to look at it for you.
+If you spot any problems or have any improvement ideas then feel free to open an issue and I will be glad to look at it for you.
 
-## Python modules
+## pip install
+The tool is available in PyPI and can be installed using pip:
+```
+$ pip install --upgrade pip setuptools wheel
+$ pip install checkipaconsistency
+$ check_ipa_consistency --help
+```
+
+Please note, in RHEL/CentOS you may also need to install the following packages:
+```
+$ yum install python-devel openldap-devel
+```
+
+## Manual install
 Run the following command to install required Python modules:
 ```
+$ git clone https://github.com/peterpakos/check_ipa_consistency.git
+$ cd check_ipa_consistency
 $ pip install -r requirements.txt
+$ ./check_ipa_consistency --help
 ```
 
 ## Configuration
-Edit the sample config file `check_ipa_consistency.cfg_sample` and save it as either `~/.check_ipa_consistency.cfg` or `check_ipa_consistency.cfg` in the script's directory.
+By default, the tool reads its configuration from `~/.config/checkipaconsistency` file (the location can be overridden by setting environment variable `XDG_CONFIG_HOME`). If the config file (or directory) does not exist then it will be automatically created and populated with sample config upon the next run. Alternatively, you can specify all required options directly from the command line.
 
 ## Help
 ```
-$ ./check_ipa_consistency --help
+$ check_ipa_consistency --help
 usage: check_ipa_consistency [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]]
                              [-D [BINDDN]] [-W [BINDPW]] [--version] [--help]
                              [--debug] [--verbose] [--quiet] [--no-header]
@@ -62,7 +78,7 @@ optional arguments:
 
 ## Example
 ```
-$ ./check_ipa_consistency -d ipa.example.com -W ********
+$ check_ipa_consistency -d ipa.example.com -W ********
 +--------------------+----------+----------+----------+-----------+----------+----------+-------+
 | FreeIPA servers:   | ipa01    | ipa02    | ipa03    | ipa04     | ipa05    | ipa06    | STATE |
 +--------------------+----------+----------+----------+-----------+----------+----------+-------+
@@ -88,7 +104,7 @@ $ ./check_ipa_consistency -d ipa.example.com -W ********
 
 ```
 ## Debug mode
-If you experience any problems with the tool, check the log file (`check_ipa_consistency.log`) or try running it in the debug mode:
+If you experience any problems with the tool, try running it in the debug mode:
 
 ```
 $ ./check_ipa_consistency --debug
@@ -103,12 +119,12 @@ $ ./check_ipa_consistency --debug
 ## Nagios plug-in mode
 Perform all checks using default warning/critical thresholds:
 ```
-$ ./check_ipa_consistency -n all
+$ check_ipa_consistency -n all
 OK - 15/15 checks passed
 ```
 Perform specific check with custom alerting thresholds:
 ```
-$ ./check_ipa_consistency -n users -w 2 -c3
+$ check_ipa_consistency -n users -w 2 -c3
 OK - Active Users
 ```
 
