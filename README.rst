@@ -1,18 +1,17 @@
-check_ipa_consistency
-=====================
+checkipaconsistency aka cipa
+============================
+
+Formerly known as ipa_check_consistency and check_ipa_consistency
 
 Tool to check consistency across FreeIPA servers
 ------------------------------------------------
-
-Formerly known as ipa_check_consistency
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The tool can be used as a standalone consistency checker as well as a
 Nagios/Opsview plug-in (check `Nagios section
 below <#nagios-plug-in-mode>`__ for more info).
 
 The script was originally written and developed in BASH (until version
-`v1.3.0 <https://github.com/peterpakos/check_ipa_consistency/tree/v1.3.0>`__)
+`v1.3.0 <https://github.com/peterpakos/checkipaconsistency/tree/v1.3.0>`__)
 and eventually ported to Python in v2.0.0.
 
 It has been tested with multiple FreeIPA 4.2+ deployments across a range
@@ -23,13 +22,20 @@ Requirements:
 -  FreeIPA 4.2+
 -  Python 2.7+/3.3+
 -  Python modules listed in
-   `requirements.txt <https://github.com/peterpakos/check_ipa_consistency/blob/master/requirements.txt>`__
+   `requirements.txt <https://github.com/peterpakos/checkipaconsistency/blob/master/requirements.txt>`__
 
 If you spot any problems or have any improvement ideas then feel free to
 open an issue and I will be glad to look at it for you.
 
+Installation
+------------
+
+A recommended way of installing the tool is pip install.
+
+Once installed, a command line tool ``cipa`` will be available.
+
 pip install
------------
+~~~~~~~~~~~
 
 The tool is available in PyPI and can be installed using pip:
 
@@ -37,7 +43,7 @@ The tool is available in PyPI and can be installed using pip:
 
     $ pip install --upgrade pip setuptools wheel
     $ pip install checkipaconsistency
-    $ check_ipa_consistency --help
+    $ cipa --help
 
 Please note, in RHEL/CentOS you may also need to install the following
 packages:
@@ -47,16 +53,16 @@ packages:
     $ yum install python-devel openldap-devel
 
 Manual install
---------------
+~~~~~~~~~~~~~~
 
 Run the following command to install required Python modules:
 
 ::
 
-    $ git clone https://github.com/peterpakos/check_ipa_consistency.git
-    $ cd check_ipa_consistency
+    $ git clone https://github.com/peterpakos/checkipaconsistency.git
+    $ cd checkipaconsistency
     $ pip install -r requirements.txt
-    $ ./check_ipa_consistency --help
+    $ ./cipa --help
 
 Configuration
 -------------
@@ -73,8 +79,8 @@ Help
 
 ::
 
-    $ check_ipa_consistency --help
-    usage: check_ipa_consistency [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]]
+    $ cipa --help
+    usage: cipa [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]]
                                  [-D [BINDDN]] [-W [BINDPW]] [--version] [--help]
                                  [--debug] [--verbose] [--quiet] [--no-header]
                                  [--no-border]
@@ -111,7 +117,7 @@ Example
 
 ::
 
-    $ check_ipa_consistency -d ipa.example.com -W ********
+    $ cipa -d ipa.example.com -W ********
     +--------------------+----------+----------+----------+-----------+----------+----------+-------+
     | FreeIPA servers:   | ipa01    | ipa02    | ipa03    | ipa04     | ipa05    | ipa06    | STATE |
     +--------------------+----------+----------+----------+-----------+----------+----------+-------+
@@ -143,28 +149,37 @@ debug mode:
 
 ::
 
-    $ ./check_ipa_consistency --debug
-    2017-12-18 15:00:07,567 [check_ipa_consistency] DEBUG Namespace(binddn=None, bindpw=None, critical=2, debug=True, disable_border=False, disable_header=False, domain=None, hosts=None, nagios_check=None, quiet=False, verbose=False, warning=1)
-    2017-12-18 15:00:07,568 [check_ipa_consistency] DEBUG Initialising...
-    2017-12-18 15:00:07,568 [check_ipa_consistency] DEBUG Looking for config files
-    2017-12-18 15:00:07,568 [check_ipa_consistency] DEBUG Config file not found
-    2017-12-18 15:00:07,568 [check_ipa_consistency] CRITICAL IPA domain not set
+    $ cipa --debug
+    2017-12-20 13:39:50,825 [main] DEBUG Namespace(binddn=None, bindpw=None, critical=2, debug=True, disable_border=False, disable_header=False, domain=None, hosts=None, nagios_check=None, quiet=False, verbose=False, warning=1)
+    2017-12-20 13:39:50,825 [main] DEBUG Initialising...
+    2017-12-20 13:39:50,825 [main] DEBUG Config file not found at /root/.config/checkipaconsistency
+    2017-12-20 13:39:50,826 [main] INFO Initial config saved to /root/.config/checkipaconsistency - PLEASE EDIT IT!
+    2017-12-20 13:39:50,826 [main] CRITICAL IPA domain not set
 
 Nagios plug-in mode
 -------------------
+
+You can easily transform the tool into a Nagios/Opsview check:
+
+::
+
+    $ pip install checkipaconsistency
+    $ su - nagios
+    $ vim ~/.config/checkipaconsistency
+    $ ln -s `which cipa` /usr/local/nagios/libexec/check_ipa_consistency
 
 Perform all checks using default warning/critical thresholds:
 
 ::
 
-    $ check_ipa_consistency -n all
+    $ /usr/local/nagios/libexec/check_ipa_consistency -n all
     OK - 15/15 checks passed
 
 Perform specific check with custom alerting thresholds:
 
 ::
 
-    $ check_ipa_consistency -n users -w 2 -c3
+    $ /usr/local/nagios/libexec/check_ipa_consistency -n users -w 2 -c3
     OK - Active Users
 
 LDAP Conflicts

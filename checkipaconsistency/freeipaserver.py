@@ -6,7 +6,7 @@ Author: Peter Pakos <peter.pakos@wandisco.com>
 
 Copyright (C) 2017 WANdisco
 
-This file is part of check_ipa_consistency.
+This file is part of checkipaconsistency.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -205,7 +205,7 @@ class FreeIPAServer(object):
 
         try:
             answers = dns.resolver.query(record, 'SRV')
-        except dns.resolver.NXDOMAIN:
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers):
             return 'NO'
 
         for answer in answers:
