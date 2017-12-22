@@ -30,26 +30,27 @@ from prettytable import PrettyTable
 import dns.resolver
 from collections import OrderedDict
 
-from . import VERSION
-from .logger import get_logger
-from .freeipaserver import FreeIPAServer
-
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
+
+from . import VERSION
+from .logger import get_logger
+from .freeipaserver import FreeIPAServer
 
 
 class Main(object):
     VERSION = VERSION
 
     def __init__(self):
-        self._app_name = os.path.splitext(__name__)[0]
+        self._app_name = os.path.basename(sys.modules['__main__'].__file__)
         self._app_dir = os.path.dirname(os.path.realpath(__file__))
         self._lock()
         self._parse_args()
-        self._log = get_logger(debug=self._args.debug, quiet=self._args.quiet, verbose=self._args.verbose,
-                               file_level=False)
+        self._log = get_logger(debug=self._args.debug, quiet=self._args.quiet,
+                               file_level='DEBUG' if self._args.log_file else False,
+                               log_file=self._args.log_file if self._args.log_file else False)
         self._log.debug(self._args)
         self._log.debug('Initialising...')
 
@@ -154,14 +155,14 @@ class Main(object):
                             version='%s %s' % (os.path.basename(sys.argv[0]), self.VERSION))
         parser.add_argument('--help', action='help', help='show this help message and exit')
         parser.add_argument('--debug', action='store_true', dest='debug', help='debugging mode')
-        parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose mode')
         parser.add_argument('--quiet', action='store_true', dest='quiet', help='do not log to console')
+        parser.add_argument('-l', '--log-file', nargs='?', dest='log_file', default='not_set',
+                            help='log to file (./%s.log by default)' % self._app_name)
         parser.add_argument('--no-header', action='store_true', dest='disable_header', help='disable table header')
         parser.add_argument('--no-border', action='store_true', dest='disable_border', help='disable table border')
-        parser.add_argument('-n', nargs='?', dest='nagios_check', help='Nagios plugin mode',
-                            default='no', choices=['', 'all', 'users', 'ustage', 'upres', 'ugroups', 'hosts', 'hgroups',
-                                                   'hbac', 'sudo', 'zones', 'certs', 'ldap', 'ghosts', 'bind', 'msdcs',
-                                                   'replica'])
+        parser.add_argument('-n', nargs='?', dest='nagios_check', help='Nagios plugin mode', default='not_set',
+                            choices=['', 'all', 'users', 'ustage', 'upres', 'ugroups', 'hosts', 'hgroups', 'hbac',
+                                     'sudo', 'zones', 'certs', 'ldap', 'ghosts', 'bind', 'msdcs', 'replica'])
         parser.add_argument('-w', '--warning', type=int, dest='warning',
                             default=1, help='number of failed checks before warning (default: %(default)s)')
         parser.add_argument('-c', '--critical', type=int, dest='critical',
@@ -169,7 +170,12 @@ class Main(object):
 
         args = parser.parse_args()
 
-        if args.nagios_check == 'no':
+        if args.log_file == 'not_set':
+            args.log_file = None
+        elif not args.log_file:
+            args.log_file = self._app_name + '.log'
+
+        if args.nagios_check == 'not_set':
             args.nagios_check = None
         elif not args.nagios_check:
             args.nagios_check = 'all'
@@ -179,12 +185,14 @@ class Main(object):
     def _load_config(self):
         config = configparser.ConfigParser()
         file_dir = os.path.expanduser(os.environ.get('XDG_CONFIG_HOME', '~/.config'))
+
         if not os.path.exists(file_dir):
             self._log.debug('Config directory %s does not exist, creating' % file_dir)
             os.makedirs(file_dir)
+
         config_file = os.path.join(
             file_dir,
-            self._app_name
+            os.path.splitext(__name__)[0]
         )
 
         if not os.path.isfile(config_file):

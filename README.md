@@ -2,23 +2,30 @@
 Formerly known as ipa_check_consistency and check_ipa_consistency
 
 ## Tool to check consistency across FreeIPA servers
-The tool can be used as a standalone consistency checker as well as a Nagios/Opsview plug-in (check [Nagios section below](#nagios-plug-in-mode) for more info).
+The tool can be used as a standalone consistency checker as well as a
+Nagios/Opsview plug-in (check [Nagios section below](#nagios-plug-in-mode) for
+more info).
 
-The script was originally written and developed in BASH (until version [v1.3.0](https://github.com/peterpakos/checkipaconsistency/tree/v1.3.0)) and eventually ported to Python in v2.0.0.
+The script was originally written and then developed in BASH (until version
+[v1.3.0](https://github.com/peterpakos/checkipaconsistency/tree/v1.3.0)) and
+eventually ported to Python in v2.0.0.
 
-It has been tested with multiple FreeIPA 4.2+ deployments across a range of operating systems.
+It has been tested with multiple FreeIPA 4.2+ deployments across a range of
+operating systems.
 
 Requirements:
 * FreeIPA 4.2+
 * Python 2.7+/3.3+
-* Python modules listed in [requirements.txt](https://github.com/peterpakos/checkipaconsistency/blob/master/requirements.txt)
+* Python modules listed in
+[requirements.txt](https://github.com/peterpakos/checkipaconsistency/blob/master/requirements.txt)
 
-If you spot any problems or have any improvement ideas then feel free to open an issue and I will be glad to look at it for you.
+If you spot any problems or have any improvement ideas then feel free to open
+an issue and I will be glad to look into it for you.
 
 ## Installation
 A recommended way of installing the tool is pip install.
 
-Once installed, a command line tool `cipa` will be available.
+Once installed, a command line tool `cipa` should be available in your system's PATH.
 
 ### pip install
 The tool is available in PyPI and can be installed using pip:
@@ -28,7 +35,8 @@ $ pip install checkipaconsistency
 $ cipa --help
 ```
 
-Please note, in RHEL/CentOS you may also need to install the following packages:
+Please note, in RHEL/CentOS you may also need to install the following
+packages:
 ```
 $ yum install python-devel openldap-devel
 ```
@@ -43,17 +51,21 @@ $ ./cipa --help
 ```
 
 ## Configuration
-By default, the tool reads its configuration from `~/.config/checkipaconsistency` file (the location can be overridden by setting environment variable `XDG_CONFIG_HOME`). If the config file (or directory) does not exist then it will be automatically created and populated with sample config upon the next run. Alternatively, you can specify all required options directly from the command line.
+By default, the tool reads its configuration from
+`~/.config/checkipaconsistency` file (the location can be overridden by setting
+environment variable `XDG_CONFIG_HOME`). If the config file (or directory) does
+not exist then it will be automatically created and populated with sample
+config upon the next run. Alternatively, you can specify all required options
+directly from the command line.
 
 ## Help
 ```
 $ cipa --help
-usage: cipa [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]]
-                             [-D [BINDDN]] [-W [BINDPW]] [--version] [--help]
-                             [--debug] [--verbose] [--quiet] [--no-header]
-                             [--no-border]
-                             [-n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]]
-                             [-w WARNING] [-c CRITICAL]
+usage: cipa [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]] [-D [BINDDN]] [-W [BINDPW]]
+            [--version] [--help] [--debug] [--quiet] [-l [LOG_FILE]]
+            [--no-header] [--no-border]
+            [-n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]]
+            [-w WARNING] [-c CRITICAL]
 
 Tool to check consistency across FreeIPA servers
 
@@ -69,8 +81,9 @@ optional arguments:
   --version             show program's version number and exit
   --help                show this help message and exit
   --debug               debugging mode
-  --verbose             verbose mode
   --quiet               do not log to console
+  -l [LOG_FILE], --log-file [LOG_FILE]
+                        log to file (./cipa.log by default)
   --no-header           disable table header
   --no-border           disable table border
   -n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]
@@ -110,18 +123,17 @@ $ cipa -d ipa.example.com -W ********
 ```
 ## Debug mode
 If you experience any problems with the tool, try running it in the debug mode:
-
 ```
 $ cipa --debug
-2017-12-20 13:39:50,825 [main] DEBUG Namespace(binddn=None, bindpw=None, critical=2, debug=True, disable_border=False, disable_header=False, domain=None, hosts=None, nagios_check=None, quiet=False, verbose=False, warning=1)
-2017-12-20 13:39:50,825 [main] DEBUG Initialising...
-2017-12-20 13:39:50,825 [main] DEBUG Config file not found at /root/.config/checkipaconsistency
-2017-12-20 13:39:50,826 [main] INFO Initial config saved to /root/.config/checkipaconsistency - PLEASE EDIT IT!
-2017-12-20 13:39:50,826 [main] CRITICAL IPA domain not set
+2017-12-22 20:05:04,494 [main] DEBUG Namespace(binddn=None, bindpw=None, critical=2, debug=True, disable_border=False, disable_header=False, domain=None, hosts=None, log_file=None, nagios_check=None, quiet=False, warning=1)
+2017-12-22 20:05:04,494 [main] DEBUG Initialising...
+2017-12-22 20:05:04,494 [main] DEBUG Config file not found at /Users/peter/.config/checkipaconsistency
+2017-12-22 20:05:04,494 [main] INFO Initial config saved to /Users/peter/.config/checkipaconsistency - PLEASE EDIT IT!
+2017-12-22 20:05:04,495 [main] CRITICAL IPA domain not set
 ```
 
 ## Nagios plug-in mode
-You can easily transform the tool into a Nagios/Opsview check:
+The tool can be easily transformed into a Nagios/Opsview check:
 ```
 $ pip install checkipaconsistency
 $ su - nagios
@@ -142,8 +154,12 @@ OK - Active Users
 ```
 
 ### LDAP Conflicts
-Normally conflicting changes between replicas are resolved automatically (the most recent change takes precedence).
-However, there are cases where manual intervention is required. If you see LDAP conflicts in the output of this script,
-you need to find the conflicting entries and decide which of them should be preserved/deleted.
+Normally conflicting changes between replicas are resolved automatically (the
+most recent change takes precedence).
+However, there are cases where manual intervention is required. If you see LDAP
+conflicts in the output of this script,
+you need to find the conflicting entries and decide which of them should be
+preserved/deleted.
 
-More information on solving common replication conflicts can be found [here](https://access.redhat.com/documentation/en-us/red_hat_directory_server/10/html/administration_guide/managing_replication-solving_common_replication_conflicts).
+More information on solving common replication conflicts can be found
+[here](https://access.redhat.com/documentation/en-us/red_hat_directory_server/10/html/administration_guide/managing_replication-solving_common_replication_conflicts).

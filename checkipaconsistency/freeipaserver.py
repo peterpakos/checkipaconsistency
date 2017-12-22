@@ -44,6 +44,8 @@ class FreeIPAServer(object):
         self._preserved_user_base = 'cn=deleted users,cn=accounts,cn=provisioning,' + self._base_dn
         self._groups_base = 'cn=groups,cn=accounts,' + self._base_dn
 
+        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+
         try:
             self._conn = ldap.initialize(self._url)
             self._conn.set_option(ldap.OPT_NETWORK_TIMEOUT, 3)
@@ -52,8 +54,12 @@ class FreeIPAServer(object):
             ldap.SERVER_DOWN,
             ldap.NO_SUCH_OBJECT,
             ldap.INVALID_CREDENTIALS
-        ) as err:
-            self._log.critical('Bind error: %s (%s)' % (err.message['desc'], self.fqdn))
+        ) as e:
+            if hasattr(e, 'message') and 'desc' in e.message:
+                msg = e.message['desc']
+            else:
+                msg = e.args[0]['desc']
+            self._log.critical('Bind error: %s (%s)' % (msg, self.fqdn))
             exit(1)
 
         self.users = self._count_users(user_base='active')

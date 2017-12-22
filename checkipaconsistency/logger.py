@@ -27,8 +27,7 @@ import sys
 import logging
 
 
-def get_logger(dir_name=None, file_name=None, debug=False, verbose=False, quiet=False, console_level='INFO',
-               file_level='INFO'):
+def get_logger(debug=False, quiet=False, verbose=False, console_level='INFO', file_level=False, log_file=None):
     if not verbose:
         other_loggers = []
         for key in logging.Logger.manager.loggerDict:
@@ -38,20 +37,10 @@ def get_logger(dir_name=None, file_name=None, debug=False, verbose=False, quiet=
         for other_logger in other_loggers:
             logging.getLogger(other_logger).propagate = False
 
-    if not file_name:
-        file_name = os.path.splitext(sys.modules['__main__'].__file__)[0] + '.log'
-
-    if dir_name:
-        log_file = '%s/%s' % (dir_name, file_name)
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-    else:
-        log_file = file_name
-
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    if not quiet and console_level:
+    if console_level and not quiet:
         if debug:
             console_formatter = logging.Formatter('%(asctime)s [%(module)s] %(levelname)s %(message)s')
         else:
@@ -60,12 +49,25 @@ def get_logger(dir_name=None, file_name=None, debug=False, verbose=False, quiet=
         console_handler.setLevel(logging.DEBUG if debug else getattr(logging, console_level.upper()))
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
+    else:
+        null_handler = logging.NullHandler()
+        logger.addHandler(null_handler)
 
     if file_level:
+        if not log_file:
+            log_file = os.path.join(
+                os.path.abspath(os.path.curdir),
+                os.path.splitext(sys.modules['__main__'].__file__)[0] + '.log'
+            )
+
         file_formatter = logging.Formatter('%(asctime)s [%(module)s] %(levelname)s %(message)s')
-        file_handler = logging.FileHandler(log_file, mode='w')
-        file_handler.setLevel(logging.DEBUG if debug else getattr(logging, file_level.upper()))
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
+        try:
+            file_handler = logging.FileHandler(log_file, mode='w')
+            file_handler.setLevel(logging.DEBUG if debug else getattr(logging, str(file_level).upper()))
+            file_handler.setFormatter(file_formatter)
+            logger.addHandler(file_handler)
+        except (PermissionError, IsADirectoryError, FileNotFoundError) as e:
+            logger.critical(e)
+            exit(1)
 
     return logger
