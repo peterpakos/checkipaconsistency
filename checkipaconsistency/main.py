@@ -25,7 +25,6 @@ from __future__ import absolute_import, print_function
 import os
 import sys
 import argparse
-import fcntl
 from prettytable import PrettyTable
 import dns.resolver
 from collections import OrderedDict
@@ -46,7 +45,6 @@ class Main(object):
     def __init__(self):
         self._app_name = os.path.basename(sys.modules['__main__'].__file__)
         self._app_dir = os.path.dirname(os.path.realpath(__file__))
-        self._lock()
         self._parse_args()
         self._log = get_logger(debug=self._args.debug, quiet=self._args.quiet,
                                file_level='DEBUG' if self._args.log_file else False,
@@ -135,15 +133,6 @@ class Main(object):
             ('msdcs', 'Microsoft ADTrust'),
             ('replica', 'Replication Status')
         ])
-
-    def _lock(self):
-        lock_file = self._app_dir + '/.lock'
-        file_descriptor = os.open(lock_file, os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
-        try:
-            fcntl.lockf(file_descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except IOError:
-            print('The script is already running, exiting...', file=sys.stderr)
-            exit(1)
 
     def _parse_args(self):
         parser = argparse.ArgumentParser(description='Tool to check consistency across FreeIPA servers', add_help=False)
