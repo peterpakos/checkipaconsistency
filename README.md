@@ -115,7 +115,7 @@ $ cipa -d ipa.example.com -W ********
 | LDAP Conflicts     | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
 | Ghost Replicas     | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
 | Anonymous BIND     | ON       | ON       | ON       | ON        | ON       | ON       | OK    |
-| Microsoft ADTrust  | False    | Fals     | False    | False     | False    | False    | OK    |
+| Microsoft ADTrust  | False    | False    | False    | False     | False    | False    | OK    |
 | Replication Status | ipa03 0  | ipa03 0  | ipa04 0  | ipa03 0   | ipa03 0  | ipa04 0  | OK    |
 |                    | ipa04 0  | ipa04 0  | ipa05 0  | ipa01 0   | ipa01 0  |          |       |
 |                    | ipa05 0  | ipa05 0  | ipa01 0  | ipa02 0   | ipa02 0  |          |       |
