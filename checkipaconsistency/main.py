@@ -39,6 +39,11 @@ from .logger import get_logger
 from .freeipaserver import FreeIPAServer
 
 
+class Checks(object):
+    def __init__(self):
+        pass
+
+
 class Main(object):
     VERSION = VERSION
 
@@ -74,8 +79,6 @@ class Main(object):
             self._hosts = self._args.hosts
 
         for i, host in enumerate(self._hosts):
-            if '.' not in host:
-                self._hosts[i] = host + '.' + self._domain
             if not host or ' ' in host:
                 self._log.critical('Incorrect server name: %s' % host)
                 exit(1)
@@ -113,25 +116,27 @@ class Main(object):
             exit(1)
 
         self._servers = OrderedDict()
-        for fqdn in self._hosts:
-            self._servers[fqdn] = FreeIPAServer(fqdn, self._binddn, self._bindpw)
+        for host in self._hosts:
+            self._servers[host] = FreeIPAServer(host, self._domain, self._binddn, self._bindpw)
 
         self._checks = OrderedDict([
             ('users', 'Active Users'),
-            ('ustage', 'Stage Users'),
-            ('upres', 'Preserved Users'),
-            ('ugroups', 'User Groups'),
+            ('susers', 'Stage Users'),
+            ('pusers', 'Preserved Users'),
             ('hosts', 'Hosts'),
+            ('services', 'Services'),
+            ('ugroups', 'User Groups'),
             ('hgroups', 'Host Groups'),
+            ('ngroups', 'Netgroups'),
             ('hbac', 'HBAC Rules'),
             ('sudo', 'SUDO Rules'),
             ('zones', 'DNS Zones'),
             ('certs', 'Certificates'),
-            ('ldap', 'LDAP Conflicts'),
+            ('conflicts', 'LDAP Conflicts'),
             ('ghosts', 'Ghost Replicas'),
             ('bind', 'Anonymous BIND'),
             ('msdcs', 'Microsoft ADTrust'),
-            ('replica', 'Replication Status')
+            ('replicas', 'Replication Status')
         ])
 
     def _parse_args(self):
@@ -140,9 +145,9 @@ class Main(object):
         parser.add_argument('-d', '--domain', nargs='?', dest='domain', help='IPA domain')
         parser.add_argument('-D', '--binddn', nargs='?', dest='binddn', help='Bind DN (default: cn=Directory Manager)')
         parser.add_argument('-W', '--bindpw', nargs='?', dest='bindpw', help='Bind password')
+        parser.add_argument('--help', action='help', help='show this help message and exit')
         parser.add_argument('--version', action='version',
                             version='%s %s' % (os.path.basename(sys.argv[0]), self.VERSION))
-        parser.add_argument('--help', action='help', help='show this help message and exit')
         parser.add_argument('--debug', action='store_true', dest='debug', help='debugging mode')
         parser.add_argument('--quiet', action='store_true', dest='quiet', help='do not log to console')
         parser.add_argument('-l', '--log-file', nargs='?', dest='log_file', default='not_set',
@@ -150,8 +155,9 @@ class Main(object):
         parser.add_argument('--no-header', action='store_true', dest='disable_header', help='disable table header')
         parser.add_argument('--no-border', action='store_true', dest='disable_border', help='disable table border')
         parser.add_argument('-n', nargs='?', dest='nagios_check', help='Nagios plugin mode', default='not_set',
-                            choices=['', 'all', 'users', 'ustage', 'upres', 'ugroups', 'hosts', 'hgroups', 'hbac',
-                                     'sudo', 'zones', 'certs', 'ldap', 'ghosts', 'bind', 'msdcs', 'replica'])
+                            choices=['', 'all', 'users', 'susers', 'pusers', 'hosts', 'services', 'ugroups', 'hgroups',
+                                     'ngroups', 'hbac', 'sudo', 'zones', 'certs', 'conflicts', 'ghosts', 'bind',
+                                     'msdcs', 'replicas'])
         parser.add_argument('-w', '--warning', type=int, dest='warning',
                             default=1, help='number of failed checks before warning (default: %(default)s)')
         parser.add_argument('-c', '--critical', type=int, dest='critical',
@@ -263,17 +269,25 @@ class Main(object):
         self._log.info(table)
 
     def _is_consistent(self, check, check_results):
-        if check == 'ldap' and 'YES' in check_results:
-            return False
-        elif check == 'ghosts' and 'YES' in check_results:
-            return False
-        elif check == 'replica':
+        if check == 'conflicts':
+            conflicts = [getattr(server, 'conflicts') for server in self._servers.values()]
+            if conflicts.count(conflicts[0]) == len(conflicts) and conflicts[0] == 0:
+                return True
+            else:
+                return False
+        elif check == 'ghosts':
+            ghosts = [getattr(server, 'ghosts') for server in self._servers.values()]
+            if ghosts.count(ghosts[0]) == len(ghosts) and ghosts[0] == 0:
+                return True
+            else:
+                return False
+        elif check == 'replicas':
             healths = [getattr(server, 'healthy_agreements') for server in self._servers.values()]
             if healths.count(healths[0]) == len(healths) and healths[0]:
                 return True
             else:
                 return False
-        if check_results.count(check_results[0]) == len(check_results):
+        if check_results.count(check_results[0]) == len(check_results) and None not in check_results:
             return True
         else:
             return False

@@ -62,9 +62,9 @@ directly from the command line.
 ```
 $ cipa --help
 usage: cipa [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]] [-D [BINDDN]] [-W [BINDPW]]
-            [--version] [--help] [--debug] [--quiet] [-l [LOG_FILE]]
+            [--help] [--version] [--debug] [--quiet] [-l [LOG_FILE]]
             [--no-header] [--no-border]
-            [-n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]]
+            [-n [{,all,users,susers,pusers,hosts,services,ugroups,hgroups,ngroups,hbac,sudo,zones,certs,conflicts,ghosts,bind,msdcs,replicas}]]
             [-w WARNING] [-c CRITICAL]
 
 Tool to check consistency across FreeIPA servers
@@ -78,15 +78,15 @@ optional arguments:
                         Bind DN (default: cn=Directory Manager)
   -W [BINDPW], --bindpw [BINDPW]
                         Bind password
-  --version             show program's version number and exit
   --help                show this help message and exit
+  --version             show program's version number and exit
   --debug               debugging mode
   --quiet               do not log to console
   -l [LOG_FILE], --log-file [LOG_FILE]
                         log to file (./cipa.log by default)
   --no-header           disable table header
   --no-border           disable table border
-  -n [{,all,users,ustage,upres,ugroups,hosts,hgroups,hbac,sudo,zones,certs,ldap,ghosts,bind,msdcs,replica}]
+  -n [{,all,users,susers,pusers,hosts,services,ugroups,hgroups,ngroups,hbac,sudo,zones,certs,conflicts,ghosts,bind,msdcs,replicas}]
                         Nagios plugin mode
   -w WARNING, --warning WARNING
                         number of failed checks before warning (default: 1)
@@ -103,17 +103,19 @@ $ cipa -d ipa.example.com -W ********
 | Active Users       | 1199     | 1199     | 1199     | 1199      | 1199     | 1199     | OK    |
 | Stage Users        | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
 | Preserved Users    | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
-| User Groups        | 55       | 55       | 55       | 55        | 55       | 55       | OK    |
 | Hosts              | 357      | 357      | 357      | 357       | 357      | 357      | OK    |
+| Services           | 49       | 49       | 49       | 49        | 49       | 49       | OK    |
+| User Groups        | 55       | 55       | 55       | 55        | 55       | 55       | OK    |
 | Host Groups        | 29       | 29       | 29       | 29        | 29       | 29       | OK    |
+| Netgroups          | 11       | 11       | 11       | 11        | 11       | 11       | OK    |
 | HBAC Rules         | 3        | 3        | 3        | 3         | 3        | 3        | OK    |
 | SUDO Rules         | 2        | 2        | 2        | 2         | 2        | 2        | OK    |
 | DNS Zones          | 114      | 114      | 114      | 114       | 114      | 114      | OK    |
-| Certificates       | N/A      | N/A      | N/A      | N/A       | N/A      | N/A      | OK    |
-| LDAP Conflicts     | NO       | NO       | NO       | NO        | NO       | NO       | OK    |
-| Ghost Replicas     | NO       | NO       | NO       | NO        | NO       | NO       | OK    |
-| Anonymous BIND     | YES      | YES      | YES      | YES       | YES      | YES      | OK    |
-| Microsoft ADTrust  | NO       | NO       | NO       | NO        | NO       | NO       | OK    |
+| Certificates       | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
+| LDAP Conflicts     | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
+| Ghost Replicas     | 0        | 0        | 0        | 0         | 0        | 0        | OK    |
+| Anonymous BIND     | ON       | ON       | ON       | ON        | ON       | ON       | OK    |
+| Microsoft ADTrust  | False    | Fals     | False    | False     | False    | False    | OK    |
 | Replication Status | ipa03 0  | ipa03 0  | ipa04 0  | ipa03 0   | ipa03 0  | ipa04 0  | OK    |
 |                    | ipa04 0  | ipa04 0  | ipa05 0  | ipa01 0   | ipa01 0  |          |       |
 |                    | ipa05 0  | ipa05 0  | ipa01 0  | ipa02 0   | ipa02 0  |          |       |
