@@ -26,7 +26,6 @@ from __future__ import print_function
 import logging
 import ldap
 import dns.resolver
-import re
 
 
 class FreeIPAServer(object):
@@ -57,25 +56,14 @@ class FreeIPAServer(object):
         self._bindpw = bindpw
         self._domain = domain
         self._url = 'ldaps://' + host
-        self.hostname_short = host
-
+        self.hostname_short = host.replace('.%s' % domain, '')
         self._conn = self._get_conn()
 
         if not self._conn:
             return
 
-        if re.match('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$', host):
-            self._log.debug("IP %s supplied as host's address" % host)
-            self._fqdn = self._get_fqdn()
-            self.hostname_short = self._fqdn.partition('.')[0]
-        elif '.' not in host:
-            self._log.debug("Short hostname %s supplied as host's address" % host)
-            self._fqdn = self._get_fqdn()
-            self.hostname_short = host
-        else:
-            self._log.debug("FQDN supplied as host's address")
-            self._fqdn = host
-            self.hostname_short = host.partition('.')[0]
+        self._fqdn = self._get_fqdn()
+        self.hostname_short = self._fqdn.replace('.%s' % domain, '')
 
         self._log.debug('FQDN: %s, short hostname: %s' % (self._fqdn, self.hostname_short))
 
@@ -256,8 +244,8 @@ class FreeIPAServer(object):
     def _count_netgroups(self):
         self._log.debug('Counting netgroups...')
         results = self._search(
-            'cn=ng,cn=compat,%s' % self._base_dn,
-            '(cn=*)',
+            'cn=ng,cn=alt,%s' % self._base_dn,
+            '(ipaUniqueID=*)',
             ['dn'],
             scope=ldap.SCOPE_ONELEVEL
         )
@@ -423,10 +411,10 @@ class FreeIPAServer(object):
         for result in results:
             dn, attrs = result
             host = attrs['nsDS5ReplicaHost'][0].decode('utf-8')
-            host = host.partition('.')[0]
+            host = host.replace('.%s' % self._domain, '')
             status = attrs['nsds5replicaLastUpdateStatus'][0].decode('utf-8')
             status = status.replace('Error ', '').partition(' ')[0].strip('()')
-            if status != '0':
+            if status not in ['0']:
                 healthy = False
             msg.append('%s %s' % (host, status))
 
