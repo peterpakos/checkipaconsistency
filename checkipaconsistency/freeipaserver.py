@@ -300,7 +300,10 @@ class FreeIPAServer(object):
             '(|(objectClass=idnszone)(objectClass=idnsforwardzone))',
             scope=ldap.SCOPE_ONELEVEL
         )
-        r = len(results)
+        if not results and type(results) is not list:
+            r = 0
+        else:
+            r = len(results)
         self._log.debug(r)
         return r
 

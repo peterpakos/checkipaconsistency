@@ -34,8 +34,8 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+from pplogger import get_logger
 from . import VERSION
-from .logger import get_logger
 from .freeipaserver import FreeIPAServer
 
 
