@@ -27,18 +27,26 @@ A recommended way of installing the tool is pip install.
 
 Once installed, a command line tool `cipa` should be available in your system's PATH.
 
-### pip install
-The tool is available in PyPI and can be installed using pip:
-```
-$ pip install --upgrade pip setuptools wheel
-$ pip install checkipaconsistency
-$ cipa --help
-```
+###__WARNING: Never attempt pip install as root!__  
+__If you do, pip will install new dependencies globally and override existing
+packages with potentially incompatible versions. This is particularly important
+when installing `cipa` on a machine running FreeIPA server.__
 
-Please note, in RHEL/CentOS you may also need to install the following
+__You should either install the package as an unprivileged user with
+`pip install --user` or use a virtual environment.__
+
+### pip install
+Please note, in RHEL/CentOS systems you may need to install the following
 packages:
 ```
-$ yum install python-devel openldap-devel
+$ sudo yum install python-devel openldap-devel
+```
+
+The tool is available in PyPI and can be installed using pip:
+```
+$ sudo pip install --upgrade pip setuptools
+$ pip install --user checkipaconsistency
+$ cipa --help
 ```
 
 ### Manual install
@@ -46,7 +54,7 @@ Run the following command to install required Python modules:
 ```
 $ git clone https://github.com/peterpakos/checkipaconsistency.git
 $ cd checkipaconsistency
-$ pip install -r requirements.txt
+$ pip install --user -r requirements.txt
 $ ./cipa --help
 ```
 
