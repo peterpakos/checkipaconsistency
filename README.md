@@ -27,7 +27,7 @@ A recommended way of installing the tool is pip install.
 
 Once installed, a command line tool `cipa` should be available in your system's PATH.
 
-###__WARNING: Never attempt pip install as root!__  
+### __WARNING: Never attempt pip install as root!__
 __If you do, pip will install new dependencies globally and override existing
 packages with potentially incompatible versions. This is particularly important
 when installing `cipa` on a machine running FreeIPA server.__
