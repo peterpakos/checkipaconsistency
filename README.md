@@ -44,7 +44,6 @@ $ sudo yum install python-devel openldap-devel
 
 The tool is available in PyPI and can be installed using pip:
 ```
-$ sudo pip install --upgrade pip setuptools
 $ pip install --user checkipaconsistency
 $ cipa --help
 ```
