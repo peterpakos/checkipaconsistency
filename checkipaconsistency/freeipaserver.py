@@ -417,7 +417,7 @@ class FreeIPAServer(object):
             host = host.replace('.%s' % self._domain, '')
             status = attrs['nsds5replicaLastUpdateStatus'][0].decode('utf-8')
             status = status.replace('Error ', '').partition(' ')[0].strip('()')
-            if status not in ['0']:
+            if status not in ['0', '18']:
                 healthy = False
             msg.append('%s %s' % (host, status))
 
