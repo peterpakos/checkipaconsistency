@@ -35,7 +35,7 @@ except ImportError:
     import ConfigParser as configparser
 
 from pplogger import get_logger
-from . import VERSION
+from .__version__ import __version__
 from .freeipaserver import FreeIPAServer
 
 
@@ -45,13 +45,11 @@ class Checks(object):
 
 
 class Main(object):
-    VERSION = VERSION
-
     def __init__(self):
         self._app_name = os.path.basename(sys.modules['__main__'].__file__)
         self._app_dir = os.path.dirname(os.path.realpath(__file__))
         self._parse_args()
-        self._log = get_logger(debug=self._args.debug, quiet=self._args.quiet,
+        self._log = get_logger(debug=self._args.debug, quiet=self._args.quiet, verbose=self._args.verbose,
                                file_level='DEBUG' if self._args.log_file else False,
                                log_file=self._args.log_file if self._args.log_file else False)
         self._log.debug(self._args)
@@ -147,8 +145,9 @@ class Main(object):
         parser.add_argument('-W', '--bindpw', nargs='?', dest='bindpw', help='Bind password')
         parser.add_argument('--help', action='help', help='show this help message and exit')
         parser.add_argument('--version', action='version',
-                            version='%s %s' % (os.path.basename(sys.argv[0]), self.VERSION))
+                            version='%s %s' % (os.path.basename(sys.argv[0]), __version__))
         parser.add_argument('--debug', action='store_true', dest='debug', help='debugging mode')
+        parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose mode')
         parser.add_argument('--quiet', action='store_true', dest='quiet', help='do not log to console')
         parser.add_argument('-l', '--log-file', nargs='?', dest='log_file', default='not_set',
                             help='log to file (./%s.log by default)' % self._app_name)

@@ -30,7 +30,7 @@ import dns.resolver
 
 class FreeIPAServer(object):
     def __init__(self, host, domain, binddn, bindpw):
-        self._log = logging.getLogger()
+        self._log = logging.getLogger(__name__)
         self._log.debug('Initialising FreeIPA server %s' % host)
 
         self.users = None
