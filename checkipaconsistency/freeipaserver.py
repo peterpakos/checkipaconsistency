@@ -115,6 +115,7 @@ class FreeIPAServer(object):
         try:
             conn = ldap.initialize(self._url)
             conn.set_option(ldap.OPT_NETWORK_TIMEOUT, 3)
+            conn.set_option(ldap.OPT_REFERRALS, ldap.OPT_OFF)
             conn.simple_bind_s(self._binddn, self._bindpw)
         except (
             ldap.SERVER_DOWN,
@@ -138,6 +139,11 @@ class FreeIPAServer(object):
         except (ldap.NO_SUCH_OBJECT, ldap.SERVER_DOWN) as e:
             self._log.debug(self._get_ldap_msg(e))
             results = False
+        except ldap.REFERRAL as e:
+            self._log.critical("Replica %s is temporarily unavailable." % self._fqdn)
+            self._log.debug("Replica redirected")
+            self._log.debug(e.message['info'])
+            exit(1)
         return results
 
     def _get_fqdn(self):
