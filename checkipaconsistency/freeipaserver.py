@@ -333,7 +333,7 @@ class FreeIPAServer(object):
         self._log.debug('Checking for LDAP conflicts...')
         results = self._search(
             self._base_dn,
-            '(nsds5ReplConflict=*)',
+            '(|(nsds5ReplConflict=*)(&(objectclass=ldapsubentry)(nsds5ReplConflict=*)))',
             ['nsds5ReplConflict']
         )
 
