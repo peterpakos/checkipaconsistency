@@ -69,8 +69,8 @@ directly from the command line.
 ```
 $ cipa --help
 usage: cipa [-H [HOSTS [HOSTS ...]]] [-d [DOMAIN]] [-D [BINDDN]] [-W [BINDPW]]
-            [--help] [--version] [--debug] [--quiet] [-l [LOG_FILE]]
-            [--no-header] [--no-border]
+            [--help] [--version] [--debug] [--verbose] [--quiet]
+            [-l [LOG_FILE]] [--no-header] [--no-border]
             [-n [{,all,users,susers,pusers,hosts,services,ugroups,hgroups,ngroups,hbac,sudo,zones,certs,conflicts,ghosts,bind,msdcs,replicas}]]
             [-w WARNING] [-c CRITICAL]
 
@@ -88,6 +88,7 @@ optional arguments:
   --help                show this help message and exit
   --version             show program's version number and exit
   --debug               debugging mode
+  --verbose             verbose mode
   --quiet               do not log to console
   -l [LOG_FILE], --log-file [LOG_FILE]
                         log to file (./cipa.log by default)
@@ -98,7 +99,6 @@ optional arguments:
   -w WARNING, --warning WARNING
                         number of failed checks before warning (default: 1)
   -c CRITICAL, --critical CRITICAL
-                        number of failed checks before critical (default: 2)
 ```
 
 ## Example
@@ -131,7 +131,7 @@ $ cipa -d ipa.example.com -W ********
 
 ```
 ## Debug mode
-If you experience any problems with the tool, try running it in the debug mode:
+If you experience any problems with the tool, try running it in debug mode:
 ```
 $ cipa --debug
 2017-12-22 20:05:04,494 [main] DEBUG Namespace(binddn=None, bindpw=None, critical=2, debug=True, disable_border=False, disable_header=False, domain=None, hosts=None, log_file=None, nagios_check=None, quiet=False, warning=1)
@@ -140,6 +140,7 @@ $ cipa --debug
 2017-12-22 20:05:04,494 [main] INFO Initial config saved to /Users/peter/.config/checkipaconsistency - PLEASE EDIT IT!
 2017-12-22 20:05:04,495 [main] CRITICAL IPA domain not set
 ```
+For more verbosity use `--debug --verbose` arguments.
 
 ## Nagios plug-in mode
 The tool can be easily transformed into a Nagios/Opsview check:
