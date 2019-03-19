@@ -12,4 +12,4 @@ if match:
 else:
     raise RuntimeError('Unable to find version string in %s.' % (version_file,))
 
-setup(version=version_string)
+setup(version=version_string, options = {'bdist_rpm':{'post_install': 'post_install_script', 'requires': 'python-pip, python-devel, openldap-devel'}})

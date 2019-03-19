@@ -1,0 +1,1 @@
+pip install -U pip setuptools python-ldap pplogger ppipa dnspython prettytable
