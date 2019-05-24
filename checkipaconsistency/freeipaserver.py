@@ -318,6 +318,7 @@ class FreeIPAServer(object):
         results = self._search(
             'ou=certificateRepository,ou=ca,o=ipaca',
             '(certStatus=*)',
+            ['subjectName'],
             scope=ldap.SCOPE_ONELEVEL
         )
 
