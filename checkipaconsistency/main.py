@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, print_function
 import os
 import sys
+import json
 import argparse
 from prettytable import PrettyTable
 import dns.resolver
@@ -151,6 +152,8 @@ class Main(object):
         parser.add_argument('--quiet', action='store_true', dest='quiet', help='do not log to console')
         parser.add_argument('-l', '--log-file', nargs='?', dest='log_file', default='not_set',
                             help='log to file (./%s.log by default)' % self._app_name)
+        parser.add_argument('-o', '--output', dest='output_mode', help='Set output mode.', default='table')
+        parser.add_argument('--output-only-status', action='store_true', dest='status_only', help='Output only status')
         parser.add_argument('--no-header', action='store_true', dest='disable_header', help='disable table header')
         parser.add_argument('--no-border', action='store_true', dest='disable_border', help='disable table border')
         parser.add_argument('-n', nargs='?', dest='nagios_check', help='Nagios plugin mode', default='not_set',
@@ -243,29 +246,74 @@ class Main(object):
         if self._args.nagios_check:
             self._log.debug('Nagios plugin mode')
             self._nagios_plugin(self._args.nagios_check)
-        else:
-            self._log.debug('CLI mode')
+        elif self._args.output_mode == "table":
+            self._log.debug('Table output mode')
             self._print_table()
+        elif self._args.output_mode == "json":
+            self._log.debug('JSON output mode')
+            self._print_json()
         self._log.debug('Finishing...')
 
     def _print_table(self):
-        table = PrettyTable(
-            ['FreeIPA servers:'] + [getattr(server, 'hostname_short') for server in self._servers.values()] + ['STATE'],
-            header=not self._args.disable_header,
-            border=not self._args.disable_border
-        )
+        if self._args.status_only:
+            table = PrettyTable(
+                ['Testing Points'] + ['STATE'],
+                header=not self._args.disable_header,
+                border=not self._args.disable_border
+            )
+        else:
+            table = PrettyTable(
+                ['FreeIPA servers:']
+                + [getattr(server, 'hostname_short') for server in self._servers.values()]
+                + ['STATE'],
+                header=not self._args.disable_header,
+                border=not self._args.disable_border
+            )
+
         table.align = 'l'
 
         for check in self._checks:
             state = 'OK' if self._is_consistent(check, [getattr(server, check) for server in self._servers.values()])\
                 else 'FAIL'
-            table.add_row(
-                [self._checks[check]] +
-                [getattr(server, check) for server in self._servers.values()] +
-                [state]
-            )
+            if self._args.status_only:
+                table.add_row(
+                    [self._checks[check]] +
+                    [state]
+                )
+            else:
+                table.add_row(
+                    [self._checks[check]] +
+                    [getattr(server, check) for server in self._servers.values()] +
+                    [state]
+                )
 
         self._log.info(table)
+
+    def _print_json(self):
+        json_output = {}
+
+        for server in self._servers.values():
+            json_output = OrderedDict(json_output)
+            hostname_short = getattr(server, 'hostname_short')
+
+            if not self._args.status_only:
+                json_output[hostname_short] = {}
+
+            for check in self._checks:
+                if self._args.status_only:
+                    json_output[self._checks[check]] = {}
+                    state = 'OK'\
+                        if self._is_consistent(check, [getattr(server, check) for server in self._servers.values()])\
+                        else 'FAIL'
+                    json_output[self._checks[check]] = state
+                else:
+                    json_output[hostname_short][self._checks[check]] = {}
+                    json_output[hostname_short][self._checks[check]] =\
+                        str(getattr(server, check)).replace("\n", ",")
+
+        json_output = json.dumps(json_output)
+
+        self._log.info(json_output)
 
     def _is_consistent(self, check, check_results):
         if check == 'conflicts':
