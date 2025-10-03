@@ -414,7 +414,7 @@ class FreeIPAServer(object):
         results = self._search(
             'cn=replica,cn=%s,cn=mapping tree,cn=config' % suffix,
             '(objectClass=*)',
-            ['nsDS5ReplicaHost', 'nsds5replicaLastUpdateStatus'],
+            ['nsDS5ReplicaHost', 'nsds5replicaLastUpdateStatus', 'nsds5replicaLastUpdateStart', 'nsds5replicaLastUpdateEnd', 'nsds5replicaUpdateInProgress'],
             scope=ldap.SCOPE_ONELEVEL
         )
 
@@ -424,9 +424,18 @@ class FreeIPAServer(object):
             host = host.replace('.%s' % self._domain, '')
             status = attrs['nsds5replicaLastUpdateStatus'][0].decode('utf-8')
             status = status.replace('Error ', '').partition(' ')[0].strip('()')
+            updateinprogress = attrs['nsds5replicaUpdateInProgress'][0].decode('utf-8')
+            updatelaststart = attrs['nsds5replicaLastUpdateStart'][0].decode('utf-8')
+            updatelastend = attrs['nsds5replicaLastUpdateEnd'][0].decode('utf-8')
+
             if status not in ['0', '18']:
                 healthy = False
+            if updatelastend == '19700101000000Z' and updateinprogress == 'FALSE':
+                healthy = False
+            if updatelaststart == '19700101000000Z':
+                healthy = False
             msg.append('%s %s' % (host, status))
+            self._log.debug('Replica Host: %s, Replica Status: %s, UpdateLastStart: %s, UpdateInProgress: %s, UpdateLastEnd: %s' % (host, status, updatelaststart, updateinprogress, updatelastend))
 
         r1 = '\n'.join(msg)
         r2 = healthy

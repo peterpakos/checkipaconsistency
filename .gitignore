@@ -11,3 +11,4 @@ build
 dist
 py27
 py36
+.venv
